@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quantum &amp; Post-Quantum Crypto Lab | 231040011006</title>
+<meta name="description" content="Interactive simulation of 8 cryptographic algorithms: NTRU, FHE, ECC, ECDH, Hasse's Theorem, CVP, SVP, GGH — from CNTII Lecture Notes." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #040611;
+    --bg2:       #080d1a;
+    --bg3:       #0d1424;
+    --border:    rgba(99,102,241,0.18);
+    --border2:   rgba(255,255,255,0.06);
+    --indigo:    #6366f1;
+    --purple:    #a855f7;
+    --emerald:   #10b981;
+    --amber:     #f59e0b;
+    --red:       #ef4444;
+    --text:      #e2e8f0;
+    --text2:     #94a3b8;
+    --text3:     #475569;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--indigo); }
+
+  /* ── Animated background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(168,85,247,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 60% 40%, rgba(16,185,129,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(4,6,17,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(168,85,247,0.2));
+    border: 1px solid rgba(99,102,241,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .brand-title {
+    font-size: 1rem; font-weight: 700;
+    background: linear-gradient(90deg, #818cf8, #c084fc, #38bdf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brand-sub { font-size: 0.65rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  #eve-toggle {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text2); cursor: pointer; transition: all 0.2s;
+  }
+  #eve-toggle:hover { border-color: rgba(239,68,68,0.4); color: #fca5a5; background: rgba(239,68,68,0.08); }
+  #eve-toggle.active { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.5); color: #fca5a5; box-shadow: 0 0 20px rgba(239,68,68,0.15); }
+  #eve-toggle svg { width: 15px; height: 15px; }
+
+  /* ── Layout ── */
+  .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; }
+  @media (max-width: 900px) { .app { grid-template-columns: 1fr; } }
+
+  /* ── Sidebar ── */
+  .sidebar { position: sticky; top: 80px; height: calc(100vh - 96px); overflow-y: auto; padding-right: 4px; }
+  .sidebar-label { font-size: 0.65rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 4px; margin-bottom: 10px; }
+  .topic-btn {
+    width: 100%; text-align: left; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--border2); background: var(--bg2);
+    cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: 6px;
+  }
+  .topic-btn:hover { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.06); }
+  .topic-btn.active { border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.12); box-shadow: 0 0 20px rgba(99,102,241,0.08); }
+  .topic-btn .name { font-size: 0.82rem; font-weight: 600; color: var(--text2); transition: color 0.2s; }
+  .topic-btn.active .name { color: #a5b4fc; }
+  .topic-btn .badge {
+    font-size: 0.6rem; font-weight: 600; color: var(--text3);
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border2);
+    padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; width: fit-content;
+  }
+  .topic-btn.active .badge { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #818cf8; }
+
+  /* ── Main ── */
+  .main { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+  }
+  .card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border2);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.7rem; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .card-header svg { width: 14px; height: 14px; color: var(--indigo); }
+
+  /* ── Visualizer SVG area ── */
+  #viz-area {
+    height: 300px; background: var(--bg); position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #viz-area svg { width: 100%; height: 100%; }
+
+  /* ── Params grid ── */
+  .params-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 20px; }
+  @media (max-width: 600px) { .params-grid { grid-template-columns: 1fr; } }
+  .param-box { background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px; padding: 14px; }
+  .param-box-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .param-box-title.alice { color: #818cf8; }
+  .param-box-title.bob   { color: var(--emerald); }
+  .param-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .param-field { flex: 1; min-width: 80px; margin-bottom: 8px; }
+  .param-field label { display: block; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 4px; }
+  .param-field input, .param-field select {
+    width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    padding: 7px 10px; border-radius: 8px; outline: none; transition: border 0.2s;
+  }
+  .param-field input:focus, .param-field select:focus { border-color: var(--indigo); }
+  .param-note { font-size: 0.72rem; color: var(--text3); font-style: italic; padding: 4px 0; }
+
+  /* ── Bottom split ── */
+  .bottom-split { display: grid; grid-template-columns: 340px 1fr; gap: 1.25rem; }
+  @media (max-width: 900px) { .bottom-split { grid-template-columns: 1fr; } }
+
+  /* ── Breakdown panel ── */
+  .breakdown { height: 480px; display: flex; flex-direction: column; }
+  .breakdown-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .algo-name { font-size: 1.2rem; font-weight: 700; color: #a5b4fc; }
+  .algo-type-badge { display: inline-flex; font-size: 0.65rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; margin-top: 4px; }
+  .logic-box { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15); border-radius: 12px; padding: 14px; }
+  .logic-box p { font-size: 0.82rem; color: var(--text2); line-height: 1.65; }
+  .steps-section h4 { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .steps-section h4.enc { color: var(--emerald); }
+  .steps-section h4.dec { color: var(--amber); }
+  .steps-section ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .steps-section li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+  .step-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+  .step-dot.enc { background: var(--emerald); }
+  .step-dot.dec { background: var(--amber); }
+  #run-btn {
+    margin: 0 20px 16px; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--indigo), var(--purple));
+    color: white; border: none; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+  }
+  #run-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(99,102,241,0.4); }
+  #run-btn:disabled { background: rgba(255,255,255,0.05); color: var(--text3); cursor: not-allowed; transform: none; box-shadow: none; }
+  #run-btn svg { width: 16px; height: 16px; }
+
+  /* ── Logs panel ── */
+  .logs-panel { height: 480px; display: flex; flex-direction: column; }
+  .logs-body { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .log-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text3); gap: 8px; font-size: 0.82rem; font-style: italic; }
+  .log-entry {
+    padding: 10px 14px; border-radius: 10px; border: 1px solid;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.55;
+    animation: logIn 0.3s ease;
+  }
+  @keyframes logIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .log-entry .log-time { opacity: 0.4; margin-right: 8px; }
+  .log-entry.info    { background: rgba(55,65,81,0.4);  border-color: rgba(75,85,99,0.5);   color: #d1d5db; }
+  .log-entry.alice   { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.25); color: #a5b4fc; }
+  .log-entry.bob     { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); color: #6ee7b7; }
+  .log-entry.eve     { background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.3);   color: #fca5a5; }
+  .log-entry.success { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.5);  color: #34d399; font-weight: 600; }
+  .log-entry.math    { background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.25); color: #d8b4fe; font-size: 0.73rem; }
+  .log-entry.warn    { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3);  color: #fbbf24; }
+
+  /* ── SVG & Animation utilities ── */
+  .packet { transition: cx 1.2s cubic-bezier(0.4,0,0.2,1), cy 1.2s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes pulse { 0%,100% { opacity: 1; r: 14px; } 50% { opacity: 0.6; r: 18px; } }
+  .pulse-anim { animation: pulse 1.2s ease infinite; }
+  @keyframes dashFlow { to { stroke-dashoffset: -200; } }
+  .dash-flow { animation: dashFlow 8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes ecc-draw { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+  @keyframes latticeDot { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header>
+  <div class="header-brand">
+    <div class="brand-icon">🔐</div>
+    <div>
+      <div class="brand-title">Quantum &amp; Post-Quantum Crypto Lab</div>
+      <div class="brand-sub">231040011006 · CNTII Lecture Notes · 8 Algorithms</div>
+    </div>
+  </div>
+  <button id="eve-toggle" onclick="toggleEve()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="eve-label">Enable Attacker (Eve)</span>
+  </button>
+</header>
+
+<!-- ══════════════ APP ══════════════ -->
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Algorithms &amp; Theorems</div>
+    <div id="topic-list"></div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Visualizer -->
+    <div class="card">
+      <div class="card-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="7" opacity=".4"/><circle cx="12" cy="12" r="12" opacity=".15"/></svg>
+        <span id="viz-mode-label">Network Data Flow</span>
+      </div>
+      <div id="viz-area"><!-- SVG injected by JS --></div>
+      <!-- Parameters -->
+      <div class="params-grid">
+        <div class="param-box" id="alice-box">
+          <div class="param-box-title alice">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8 8 0 0113 0"/></svg>
+            Alice's Inputs
+          </div>
+          <div id="alice-params"></div>
+        </div>
+        <div class="param-box" id="bob-box">
+          <div class="param-box-title bob">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <span id="bob-box-title">Bob's Inputs</span>
+          </div>
+          <div id="bob-params"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom split -->
+    <div class="bottom-split">
+
+      <!-- Algorithm Breakdown -->
+      <div class="card breakdown">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Algorithm Breakdown
+        </div>
+        <div class="breakdown-body" id="breakdown-body"></div>
+        <button id="run-btn" onclick="runSimulation()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Transmission Simulation
+        </button>
+      </div>
+
+      <!-- Logs -->
+      <div class="card logs-panel">
+        <div class="card-header" style="justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Mathematical Flow Log
+          </div>
+          <button onclick="clearLogs()" style="font-size:0.65rem;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Clear</button>
+        </div>
+        <div class="logs-body" id="logs-body">
+          <div class="log-empty" id="log-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            System ready. Select an algorithm and run simulation.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+// ════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════
+const TOPICS = [
+  {
+    id: 'ntru', name: 'NTRU', type: 'Post-Quantum', cat: 'network',
+    logic: "NTRU avoids prime factorization (vulnerable to Shor's quantum algorithm) by working in polynomial rings ℤ[x]/(xᴺ−1). Security relies on the Shortest Vector Problem (SVP) in a lattice — believed to be quantum-resistant. Encryption adds blinding noise r(x)·h(x) to mask the message.",
+    encryptSteps: [
+      "Represent message as polynomial m(x) ∈ ℤp[x]/(xᴺ−1)",
+      "Choose random blinding polynomial r(x) (noise/salt)",
+      "Bob's public key h(x) = p·f⁻¹(x)·g(x) mod q",
+      "Ciphertext: c(x) = p·r(x)·h(x) + m(x)  mod q"
+    ],
+    decryptSteps: [
+      "Compute a(x) = f(x)·c(x) mod q (choose closest lift to [-q/2, q/2])",
+      "Noise drops out: a(x) ≡ p·g(x)·r(x) + f(x)·m(x) mod p",
+      "Because coefficients are small, reduce mod p to get f(x)·m(x)",
+      "Multiply by f⁻¹(x) mod p to recover m(x)"
+    ],
+    alice: [
+      { id: 'm', label: 'Message Poly m(x)', val: '1 - x + x^2', type: 'text' },
+      { id: 'r', label: 'Blinding Poly r(x)', val: 'x - x^3',   type: 'text' }
+    ],
+    bob: [
+      { id: 'p', label: 'Prime p', val: '3',  type: 'number' },
+      { id: 'q', label: 'Modulo q', val: '32', type: 'number' }
+    ]
+  },
+  {
+    id: 'fhe', name: 'Fully Homomorphic Encryption', type: 'Cloud Security', cat: 'network',
+    logic: "FHE (Gentry, 2009) lets a cloud server compute on encrypted data without decrypting it. Based on the Learning With Errors (LWE) problem — adding secret noise that only the key-holder can remove. Operations on ciphertexts mirror operations on plaintexts: E(a)⊕E(b) = E(a+b).",
+    encryptSteps: [
+      "Alice holds secret key s. Encrypt: E(a) = a + 2·noise + 2·B·s  mod large N",
+      "E(b) = b + 2·noise' + 2·B'·s  mod N",
+      "Send encrypted values E(a), E(b) to cloud server"
+    ],
+    decryptSteps: [
+      "Cloud computes: E(result) = E(a) OP E(b)  (homomorphic operation)",
+      "Cloud has no key — sees only noisy ciphertext",
+      "Alice decrypts using secret key s → result = (E(result) - 2·B_result·s) mod 2"
+    ],
+    alice: [
+      { id: 'a', label: 'Data Point A', val: '15', type: 'number' },
+      { id: 'b', label: 'Data Point B', val: '27', type: 'number' }
+    ],
+    bob: [
+      { id: 'op', label: 'Operation', val: '+', type: 'select', options: [{v:'+',l:'Addition (+)'},{v:'*',l:'Multiplication (×)'}] }
+    ]
+  },
+  {
+    id: 'ecc', name: 'Elliptic Curve Cryptography', type: 'Public Key', cat: 'geometry-ecc',
+    logic: "ECC uses the group law on y² = x³ + ax + b over 𝔽p. Point addition P+Q is defined geometrically: draw a line through P, Q; it intersects the curve at −R; reflect over x-axis to get R. The ECDLP (given P and kP, find k) is computationally intractable — this is the trapdoor.",
+    encryptSteps: [
+      "Map message M to a curve point. Pick random k ∈ [1, n−1]",
+      "Compute C₁ = k·G (G is the generator point)",
+      "Compute C₂ = M + k·Qₐ  (Qₐ = Alice's public key)",
+      "Ciphertext = (C₁, C₂)"
+    ],
+    decryptSteps: [
+      "Receive (C₁, C₂) from sender",
+      "Compute S = dₐ·C₁  (dₐ = Alice's private key)",
+      "Note: S = dₐ·k·G = k·Qₐ",
+      "Recover M = C₂ − S  (EC point subtraction)"
+    ],
+    alice: [
+      { id: 'M', label: 'Message Point M', val: 'P(5,7)', type: 'text' },
+      { id: 'k', label: 'Random k', val: '4', type: 'number' }
+    ],
+    bob: [
+      { id: 'privKey', label: 'Private Key dₐ', val: '7', type: 'number' }
+    ]
+  },
+  {
+    id: 'ecdh', name: 'ECDH Key Exchange', type: 'Key Exchange', cat: 'network',
+    logic: "ECDH lets Alice and Bob agree on a shared secret over a public channel without transmitting the secret. Both compute the same point a·b·G = S using their own private key and the other's public point. An eavesdropper sees A=a·G and B=b·G but cannot compute a·b·G without solving ECDLP.",
+    encryptSteps: [
+      "Alice picks private a, computes public A = a·G",
+      "Bob picks private b, computes public B = b·G",
+      "Alice sends A, Bob sends B — these are public values"
+    ],
+    decryptSteps: [
+      "Alice computes S = a·B = a·b·G",
+      "Bob computes S = b·A = b·a·G",
+      "Both arrive at same shared secret S = ab·G",
+      "Use S as AES key or KDF input — never transmitted!"
+    ],
+    alice: [
+      { id: 'a', label: 'Private a', val: '12', type: 'number' }
+    ],
+    bob: [
+      { id: 'b', label: 'Private b', val: '7', type: 'number' }
+    ]
+  },
+  {
+    id: 'hasse', name: "Hasse's Theorem", type: 'ECC Theory', cat: 'geometry-ecc',
+    logic: "Hasse's Theorem bounds the group order #E(𝔽p): |#E(𝔽p) − (p+1)| ≤ 2√p. This tells us approximately how many points exist on an elliptic curve over 𝔽p. For cryptographic use, we need #E(𝔽p) to have a large prime factor (Schoof's algorithm computes it exactly) to avoid small-subgroup attacks.",
+    encryptSteps: [
+      "Given prime p defining the finite field 𝔽p",
+      "Estimated point count: N ≈ p + 1",
+      "Hasse bound: N ∈ [p+1−⌊2√p⌋, p+1+⌈2√p⌉]",
+      "Use Schoof's or BSGS algorithm to count exactly"
+    ],
+    decryptSteps: [
+      "Verify N = #E(𝔽p) has a large prime factor q",
+      "Compute cofactor h = N/q (want h small, ideally 1 or 4)",
+      "Check curve avoids MOV, anomalous, and CM attacks",
+      "Safe curve → use as base for ECC/ECDH key generation"
+    ],
+    alice: [],
+    bob: [
+      { id: 'p', label: 'Prime Field p', val: '23', type: 'number' }
+    ]
+  },
+  {
+    id: 'cvp', name: 'Closest Vector Problem', type: 'Lattice Problem', cat: 'geometry-lattice',
+    logic: "CVP (NP-hard in general): given lattice L and target vector w ∉ L, find v ∈ L minimising ‖w−v‖. Babai's Algorithm solves approx-CVP if the basis is sufficiently orthogonal (high Hadamard ratio H(B) ≈ 1). GGH uses CVP: Bob's good private basis easily solves CVP; attacker only has the bad public basis.",
+    encryptSteps: [
+      "Lattice L spanned by basis vectors v₁=(137,312), v₂=(215,−187)",
+      "Target w = (53172, 81743) is NOT in L",
+      "Express w = t₁v₁ + t₂v₂,  solve: t₁≈296.85, t₂≈58.15",
+      "Round: a₁=297, a₂=58 → Babai approximation v = a₁v₁+a₂v₂"
+    ],
+    decryptSteps: [
+      "Good basis (Hadamard ≈ 0.996): Babai gives ‖v−w‖ ≈ 107",
+      "Bad basis (Hadamard ≈ 0.06): Babai gives ‖v−w‖ ≈ 3860!",
+      "Attacker only has bad basis → approximate solution is useless",
+      "NP-hard in high dimensions: no polynomial-time algorithm known"
+    ],
+    alice: [
+      { id: 'w', label: 'Target Vector w', val: '[5.2, 3.8]', type: 'text' }
+    ],
+    bob: [
+      { id: 'v1', label: 'Basis v₁', val: '[4, 1]',  type: 'text' },
+      { id: 'v2', label: 'Basis v₂', val: '[1, 3]',  type: 'text' }
+    ]
+  },
+  {
+    id: 'svp', name: 'Shortest Vector Problem', type: 'Lattice Problem', cat: 'geometry-lattice',
+    logic: "SVP (NP-hard): find nonzero v ∈ L minimising ‖v‖. In 2D, lattice reduction (swapping and replacing v₂ ← v₂ − t·v₁ where t = round(v₁·v₂/‖v₁‖²)) finds a reduced basis where v₁ is the shortest vector. By Hermite's Theorem: ‖v₁‖ ≤ √n · det(L)^(1/n). In high dimensions, LLL algorithm gives 2^(n/2) approximation factor.",
+    encryptSteps: [
+      "Basis {v₁, v₂} given; compute norms ‖v₁‖ and ‖v₂‖",
+      "If ‖v₁‖ > ‖v₂‖: swap them (ensure ‖v₁‖ ≤ ‖v₂‖)",
+      "Compute t = round(v₁·v₂ / ‖v₁‖²), replace v₂ ← v₂ − t·v₁",
+      "Repeat until basis is reduced: |v₁·v₂/‖v₁‖²| ≤ ½"
+    ],
+    decryptSteps: [
+      "Reduced basis satisfies ‖v₁‖ ≤ ‖v₂‖ and |proj| ≤ ½",
+      "v₁ in reduced basis is the shortest nonzero vector",
+      "Proof: ‖v‖² ≥ (|a|²−|ab|+|b|²)‖v₁‖² ≥ ‖v₁‖² for any av₁+bv₂",
+      "In n>2 dimensions: use LLL algorithm (Lenstra-Lenstra-Lovász)"
+    ],
+    alice: [
+      { id: 'v1', label: 'Basis v₁', val: '[3, 1]',  type: 'text' },
+      { id: 'v2', label: 'Basis v₂', val: '[2, 5]',  type: 'text' }
+    ],
+    bob: []
+  },
+  {
+    id: 'ggh', name: 'GGH Cryptosystem', type: 'Lattice Crypto', cat: 'network',
+    logic: "GGH (Goldreich-Goldwasser-Halevi) is a Public Key Crypto based on CVP. Alice's private key = good orthogonal basis V (high Hadamard ratio). Public key = bad skewed basis W = U·V (det(U)=±1, small Hadamard ratio). Encryption adds small noise r; decryption uses Babai's Algorithm with the good basis to remove noise.",
+    encryptSteps: [
+      "Alice, Bob agree on parameters N and perturbation bound δ",
+      "Alice's private key: good basis V (nearly orthogonal vectors)",
+      "Alice's public key: W = U·V where det(U)=±1 (integer matrix)",
+      "Bob encrypts: c = m·W + r  (m=plaintext vector, r=small noise)"
+    ],
+    decryptSteps: [
+      "Alice receives c. Uses Babai's Algorithm with good basis V",
+      "Write c = t₁v₁+…+tₙvₙ, round each tᵢ to nearest integer aᵢ",
+      "Get mW = a₁v₁+…+aₙvₙ (noise r is removed by rounding!)",
+      "Multiply by W⁻¹ to recover m = mW · W⁻¹"
+    ],
+    alice: [
+      { id: 'm', label: 'Message Vec m', val: '[4, -2]', type: 'text' }
+    ],
+    bob: [
+      { id: 'r', label: 'Noise Vec r', val: '[1, -1]', type: 'text' }
+    ]
+  }
+];
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let activeTopic = TOPICS[0].id;
+let eveActive = false;
+let simRunning = false;
+let params = {};
+
+// Init params from defaults
+TOPICS.forEach(t => {
+  params[t.id] = {};
+  [...t.alice, ...t.bob].forEach(f => { params[t.id][f.id] = f.val; });
+});
+
+// ════════════════════════════════════════
+//  MATH HELPERS (Real Calculations)
+// ════════════════════════════════════════
+function parseVec(s) {
+  const nums = s.replace(/[\[\]]/g,'').split(',').map(v => parseFloat(v.trim()));
+  return nums.length === 2 && !nums.some(isNaN) ? nums : [1, 0];
+}
+function vecNorm(v) { return Math.sqrt(v[0]*v[0] + v[1]*v[1]); }
+function dot(a, b) { return a[0]*b[0] + a[1]*b[1]; }
+function vecSub(a, b) { return [a[0]-b[0], a[1]-b[1]]; }
+function vecAdd(a, b) { return [a[0]+b[0], a[1]+b[1]]; }
+function vecScale(v, s) { return [v[0]*s, v[1]*s]; }
+function roundi(x) { return Math.round(x); }
+function fmt(v, d=3) { return typeof v === 'number' ? v.toFixed(d).replace(/\.?0+$/,'') : v; }
+function hadamard(v1, v2) { return Math.sqrt(Math.abs(v1[0]*v2[1]-v1[1]*v2[0]) / (vecNorm(v1)*vecNorm(v2))); }
+
+// Lattice reduction (2D SVP / Gauss reduction)
+function gaussReduce(v1, v2) {
+  let a = [...v1], b = [...v2];
+  let iter = 0, steps = [];
+  while (iter++ < 50) {
+    if (vecNorm(a) > vecNorm(b)) { [a, b] = [b, a]; steps.push(`Swap: v₁↔v₂ → v₁=(${a[0]},${a[1]}), v₂=(${b[0]},${b[1]})`); }
+    const t = roundi(dot(a, b) / dot(a, a));
+    if (t === 0) break;
+    b = vecSub(b, vecScale(a, t));
+    steps.push(`t=round(${fmt(dot(vecAdd(b,vecScale(a,t)),a)/dot(a,a),3)})=${t} → v₂ ← v₂ − ${t}v₁ = (${b[0]},${b[1]})`);
+  }
+  return { v1: a, v2: b, steps };
+}
+
+// Babai CVP (2D)
+function babaiCVP(basis1, basis2, w) {
+  const det = basis1[0]*basis2[1] - basis1[1]*basis2[0];
+  if (Math.abs(det) < 1e-10) return { v: w, t1: 0, t2: 0 };
+  const t1 = (w[0]*basis2[1] - w[1]*basis2[0]) / det;
+  const t2 = (basis1[0]*w[1] - basis1[1]*w[0]) / det;
+  const a1 = roundi(t1), a2 = roundi(t2);
+  const v = vecAdd(vecScale(basis1, a1), vecScale(basis2, a2));
+  const dist = vecNorm(vecSub(w, v));
+  return { v, t1, t2, a1, a2, dist };
+}
+
+// ════════════════════════════════════════
+//  UI INIT
+// ════════════════════════════════════════
+function buildSidebar() {
+  const el = document.getElementById('topic-list');
+  el.innerHTML = TOPICS.map(t => `
+    <button class="topic-btn ${t.id===activeTopic?'active':''}" id="btn-${t.id}" onclick="setTopic('${t.id}')">
+      <span class="name">${t.name}</span>
+      <span class="badge">${t.type}</span>
+    </button>
+  `).join('');
+}
+
+function buildParams(t) {
+  document.getElementById('viz-mode-label').textContent =
+    t.cat === 'network' ? 'Network Data Flow' : (t.cat === 'geometry-ecc' ? 'Elliptic Curve Geometry' : 'Lattice Geometry');
+
+  const aliceBox = document.getElementById('alice-params');
+  const bobBox   = document.getElementById('bob-params');
+  document.getElementById('bob-box-title').textContent = t.id === 'fhe' ? 'Cloud Server Inputs' : "Bob's Inputs";
+
+  aliceBox.innerHTML = t.alice.length === 0
+    ? `<p class="param-note">No direct inputs for Alice.</p>`
+    : mkFields(t.alice, t.id);
+  bobBox.innerHTML = t.bob.length === 0
+    ? `<p class="param-note">Solver uses current lattice basis.</p>`
+    : mkFields(t.bob, t.id);
+}
+
+function mkFields(fields, tid) {
+  const row = document.createElement('div');
+  row.className = 'param-row';
+  fields.forEach(f => {
+    const d = document.createElement('div'); d.className = 'param-field';
+    if (f.type === 'select') {
+      d.innerHTML = `<label>${f.label}</label>
+        <select id="p-${tid}-${f.id}" onchange="updateParam('${tid}','${f.id}',this.value)">
+          ${f.options.map(o=>`<option value="${o.v}"${params[tid][f.id]===o.v?' selected':''}>${o.l}</option>`).join('')}
+        </select>`;
+    } else {
+      d.innerHTML = `<label>${f.label}</label>
+        <input id="p-${tid}-${f.id}" type="${f.type}" value="${params[tid][f.id]}"
+          oninput="updateParam('${tid}','${f.id}',this.value)" />`;
+    }
+    row.appendChild(d);
+  });
+  return row.outerHTML;
+}
+
+function updateParam(tid, fid, val) { params[tid][fid] = val; onParamChange(); }
+
+function buildBreakdown(t) {
+  const body = document.getElementById('breakdown-body');
+  body.innerHTML = `
+    <div>
+      <div class="algo-name">${t.name}</div>
+      <span class="algo-type-badge">${t.type}</span>
+    </div>
+    <div class="logic-box"><p>${t.logic}</p></div>
+    <div class="steps-section">
+      <h4 class="enc">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        ${t.cat.includes('lattice') && t.id!=='ggh' ? 'Problem Setup' : 'Encryption / Key Setup'}
+      </h4>
+      <ul>${t.encryptSteps.map(s=>`<li><span class="step-dot enc"></span><span>${s}</span></li>`).join('')}</ul>
+    </div>
+    <div class="steps-section">
+      <h4 class="dec">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        ${t.cat.includes('lattice') && t.id!=='ggh' ? 'Solution / Theory' : 'Decryption / Recovery'}
+      </h4>
+      <ul>${t.decryptSteps.map(s=>`<li><span class="step-dot dec"></span><span>${s}</span></li>`).join('')}</ul>
+    </div>
+  `;
+  document.getElementById('run-btn').style.display =
+    t.cat === 'network' ? 'flex' : 'none';
+}
+
+function setTopic(id) {
+  activeTopic = id;
+  document.querySelectorAll('.topic-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${id}`));
+  simRunning = false;
+  const t = TOPICS.find(x => x.id === id);
+  buildParams(t);
+  buildBreakdown(t);
+  buildViz();
+  clearLogs();
+  autoLog(t);
+  setRunBtn(false);
+}
+
+// ════════════════════════════════════════
+//  VISUALIZER
+// ════════════════════════════════════════
+const PA = { x: 100, y: 150 }, PB = { x: 600, y: 150 }, PE = { x: 350, y: 255 };
+
+function buildViz() {
+  const t = TOPICS.find(x => x.id === activeTopic);
+  const area = document.getElementById('viz-area');
+  if (t.cat === 'network')        area.innerHTML = buildNetworkSVG(t);
+  else if (t.cat === 'geometry-ecc')    area.innerHTML = buildECCSVG(t);
+  else                            area.innerHTML = buildLatticeSVG(t);
+}
+
+function buildNetworkSVG(t) {
+  const p = params[t.id];
+  return `<svg viewBox="0 0 710 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.6"/>
+      </linearGradient>
+      <linearGradient id="eveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#ef4444" stop-opacity="0.15"/>
+      </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6366f1" opacity="0.8"/></marker>
+      <marker id="arrEve" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444" opacity="0.8"/></marker>
+    </defs>
+
+    <!-- Main channel -->
+    <line x1="${PA.x}" y1="${PA.y}" x2="${PB.x}" y2="${PB.y}" stroke="url(#lg1)" stroke-width="3" stroke-dasharray="12 8" class="dash-flow" />
+
+    ${eveActive ? `
+    <line x1="${PA.x}" y1="${PA.y}" x2="${PE.x}" y2="${PE.y}" stroke="url(#eveGrad)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrEve)" opacity="0.8"/>
+    <line x1="${PE.x}" y1="${PE.y}" x2="${PB.x}" y2="${PB.y}" stroke="url(#eveGrad)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrEve)" opacity="0.8"/>
+    ` : ''}
+
+    <!-- Alice -->
+    <g transform="translate(${PA.x},${PA.y})" filter="url(#glow)">
+      <circle r="44" fill="rgba(30,27,75,0.9)" stroke="#6366f1" stroke-width="2.5"/>
+      <text y="8" text-anchor="middle" fill="#818cf8" font-size="26" font-family="serif" font-weight="bold">A</text>
+      <text y="-56" text-anchor="middle" fill="#a5b4fc" font-size="13" font-weight="700" font-family="Inter,sans-serif">Alice</text>
+    </g>
+
+    <!-- Bob / Cloud -->
+    <g transform="translate(${PB.x},${PB.y})" filter="url(#glow)">
+      <circle r="44" fill="rgba(6,30,20,0.9)" stroke="#10b981" stroke-width="2.5"/>
+      <text y="8" text-anchor="middle" fill="#34d399" font-size="26" font-family="serif" font-weight="bold">${t.id==='fhe'?'☁':'B'}</text>
+      <text y="-56" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="700" font-family="Inter,sans-serif">${t.id==='fhe'?'Cloud Server':'Bob'}</text>
+    </g>
+
+    <!-- Eve -->
+    <g transform="translate(${PE.x},${PE.y})" opacity="${eveActive?1:0}" style="transition:opacity 0.4s">
+      <circle r="38" fill="rgba(80,10,10,0.9)" stroke="#ef4444" stroke-width="2"/>
+      <text y="7" text-anchor="middle" fill="#f87171" font-size="22" font-family="serif" font-weight="bold">E</text>
+      <text y="-50" text-anchor="middle" fill="#fca5a5" font-size="12" font-weight="700" font-family="Inter,sans-serif">Eve (Attacker)</text>
+    </g>
+
+    <!-- Packet placeholder -->
+    <g id="net-packet" opacity="0">
+      <circle id="pkt-circle" cx="${PA.x}" cy="${PA.y}" r="14" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+      <rect id="pkt-label-bg" x="${PA.x-45}" y="${PA.y-50}" width="90" height="22" rx="5" fill="rgba(15,20,40,0.95)" stroke="rgba(251,191,36,0.4)" stroke-width="1"/>
+      <text id="pkt-label" x="${PA.x}" y="${PA.y-34}" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace" font-weight="600">...</text>
+    </g>
+  </svg>`;
+}
+
+function buildECCSVG(t) {
+  const p = params;
+  const hp = parseInt(params.hasse?.p) || 23;
+  const sqrtP = Math.sqrt(hp);
+  const bound = 2 * sqrtP;
+
+  return `<svg viewBox="0 0 620 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glow2"><feGaussianBlur stdDeviation="4" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <marker id="arrB" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4b5563"/></marker>
+    </defs>
+
+    <!-- Axes -->
+    <line x1="55" y1="150" x2="555" y2="150" stroke="#374151" stroke-width="1.5" marker-end="url(#arrB)"/>
+    <line x1="305" y1="285" x2="305" y2="18"  stroke="#374151" stroke-width="1.5" marker-end="url(#arrB)"/>
+    <text x="545" y="142" fill="#6b7280" font-size="12" font-family="Inter,sans-serif">x</text>
+    <text x="313" y="32"  fill="#6b7280" font-size="12" font-family="Inter,sans-serif">y</text>
+
+    <!-- ECC Curve y²=x³−3x+3 approximation -->
+    <path d="M 500 12 C 420 100 365 148 348 150 C 330 152 285 110 200 12" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.85" stroke-dasharray="400" stroke-dashoffset="400" style="animation:ecc-draw 1.5s ease forwards"/>
+    <path d="M 500 288 C 420 200 365 152 348 150 C 330 148 285 190 200 288" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.85" stroke-dasharray="400" stroke-dashoffset="400" style="animation:ecc-draw 1.5s 0.3s ease forwards"/>
+
+    ${activeTopic === 'ecc' ? `
+    <!-- Point Addition visualisation -->
+    <line x1="248" y1="68" x2="484" y2="234" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7"/>
+    <line x1="484" y1="234" x2="484" y2="68" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7"/>
+
+    <circle cx="248" cy="68"  r="7" fill="#10b981" filter="url(#glow2)"/>
+    <text x="225" y="62" fill="#34d399" font-size="14" font-weight="700" font-family="Inter,sans-serif">P</text>
+
+    <circle cx="388" cy="162" r="7" fill="#10b981" filter="url(#glow2)"/>
+    <text x="398" y="162" fill="#34d399" font-size="14" font-weight="700" font-family="Inter,sans-serif">Q</text>
+
+    <circle cx="484" cy="234" r="7" fill="#6366f1" filter="url(#glow2)"/>
+    <text x="494" y="238" fill="#818cf8" font-size="13" font-weight="700" font-family="Inter,sans-serif">−R</text>
+
+    <circle cx="484" cy="68" r="10" fill="#fbbf24" filter="url(#glow2)"/>
+    <text x="496" y="65" fill="#fbbf24" font-size="13" font-weight="700" font-family="Inter,sans-serif">R = P+Q</text>
+
+    <text x="310" y="278" fill="#6b7280" font-size="11" font-family="JetBrains Mono,monospace">y² = x³ + ax + b  over 𝔽p</text>
+    ` : `
+    <!-- Hasse Theorem visualisation -->
+    <g transform="translate(155, 55)">
+      <rect width="310" height="195" fill="rgba(30,27,75,0.8)" stroke="#4f46e5" stroke-width="1.5" rx="12"/>
+      <text x="155" y="38" text-anchor="middle" fill="#a5b4fc" font-size="15" font-weight="700" font-family="Inter,sans-serif">Hasse's Theorem</text>
+      <text x="155" y="66" text-anchor="middle" fill="#e2e8f0" font-size="17" font-family="JetBrains Mono,monospace">| N − (p+1) | ≤ 2√p</text>
+
+      <!-- Number line -->
+      <line x1="40" y1="110" x2="270" y2="110" stroke="#4b5563" stroke-width="3"/>
+      <!-- Bounds region -->
+      <rect x="${155 - Math.min(bound*4, 110)}" y="103" width="${Math.min(bound*4, 110)*2}" height="14" fill="#fbbf24" opacity="0.25" rx="3"/>
+      <circle cx="155" cy="110" r="7" fill="#10b981" filter="url(#glow2)"/>
+
+      <text x="155" y="135" text-anchor="middle" fill="#6ee7b7" font-size="12" font-family="JetBrains Mono,monospace">p+1 = ${hp+1}</text>
+      <text x="${155 - Math.min(bound*4,105)}" y="98" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="JetBrains Mono,monospace">−${Math.floor(bound)}</text>
+      <text x="${155 + Math.min(bound*4,105)}" y="98" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="JetBrains Mono,monospace">+${Math.floor(bound)}</text>
+
+      <text x="155" y="162" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="Inter,sans-serif">N ∈ [${hp+1-Math.floor(bound)}, ${hp+1+Math.floor(bound)}]</text>
+      <text x="155" y="182" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="Inter,sans-serif">2√${hp} ≈ ${(2*sqrtP).toFixed(2)}</text>
+    </g>
+    `}
+  </svg>`;
+}
+
+function buildLatticeSVG(t) {
+  const v1 = parseVec(params[t.id]?.v1 || '[4,1]');
+  const v2 = parseVec(params[t.id]?.v2 || '[1,3]');
+  const w  = parseVec(params[t.id]?.w  || '[5.2,3.8]');
+  const cx = 300, cy = 150, sc = 35;
+
+  // Generate lattice points
+  let dots = '';
+  for (let i = -5; i <= 5; i++) {
+    for (let j = -5; j <= 5; j++) {
+      const x = cx + (v1[0]*i + v2[0]*j)*sc;
+      const y = cy - (v1[1]*i + v2[1]*j)*sc;
+      if (x > 20 && x < 580 && y > 10 && y < 290) {
+        dots += `<circle cx="${x}" cy="${y}" r="3" fill="#374151" opacity="0.7"/>`;
+      }
+    }
+  }
+
+  // Basis vectors from origin
+  const bx1 = cx + v1[0]*sc, by1 = cy - v1[1]*sc;
+  const bx2 = cx + v2[0]*sc, by2 = cy - v2[1]*sc;
+
+  let extra = '';
+  if (t.id === 'svp') {
+    // Reduction steps
+    const red = gaussReduce([...v1], [...v2]);
+    const rv1 = red.v1, rv2 = red.v2;
+    const rx1 = cx + rv1[0]*sc, ry1 = cy - rv1[1]*sc;
+    extra = `
+      <line x1="${cx}" y1="${cy}" x2="${rx1}" y2="${ry1}" stroke="#10b981" stroke-width="5" opacity="0.9" marker-end="url(#arrG)"/>
+      <circle cx="${rx1}" cy="${ry1}" r="7" fill="#10b981" opacity="0.95"/>
+      <rect x="${rx1+8}" y="${ry1-22}" width="160" height="22" rx="5" fill="rgba(6,30,20,0.9)" stroke="rgba(16,185,129,0.4)" stroke-width="1"/>
+      <text x="${rx1+16}" y="${ry1-7}" fill="#34d399" font-size="11" font-family="JetBrains Mono,monospace" font-weight="700">Shortest: (${rv1[0]},${rv1[1]}) ‖${vecNorm(rv1).toFixed(2)}‖</text>
+      <text x="${cx+4}" y="${cy-8}" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">O</text>
+    `;
+  }
+  if (t.id === 'cvp') {
+    const res = babaiCVP(v1, v2, w);
+    const wx = cx + w[0]*sc, wy = cy - w[1]*sc;
+    const vx = cx + res.v[0]*sc, vy = cy - res.v[1]*sc;
+    extra = `
+      <line x1="${vx}" y1="${vy}" x2="${wx}" y2="${wy}" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 3"/>
+      <circle cx="${wx}" cy="${wy}" r="8" fill="#ef4444" opacity="0.9" class="pulse-anim"/>
+      <circle cx="${vx}" cy="${vy}" r="8" fill="#10b981"/>
+      <text x="${wx+12}" y="${wy-6}" fill="#fca5a5" font-size="11" font-family="JetBrains Mono,monospace">w${w}</text>
+      <text x="${vx+12}" y="${vy+16}" fill="#34d399" font-size="11" font-family="JetBrains Mono,monospace">v=(${res.v[0].toFixed(1)},${res.v[1].toFixed(1)}) ‖${res.dist.toFixed(2)}‖</text>
+      <text x="${cx+4}" y="${cy-8}" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">O</text>
+    `;
+  }
+
+  return `<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrI" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#6366f1"/></marker>
+      <marker id="arrG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#10b981"/></marker>
+      <filter id="glow3"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    ${dots}
+    <!-- Basis v1 -->
+    <line x1="${cx}" y1="${cy}" x2="${bx1}" y2="${by1}" stroke="#6366f1" stroke-width="2.5" marker-end="url(#arrI)"/>
+    <text x="${bx1+6}" y="${by1-4}" fill="#818cf8" font-size="12" font-family="JetBrains Mono,monospace">v₁(${v1[0]},${v1[1]})</text>
+    <!-- Basis v2 -->
+    <line x1="${cx}" y1="${cy}" x2="${bx2}" y2="${by2}" stroke="#a855f7" stroke-width="2.5" marker-end="url(#arrI)"/>
+    <text x="${bx2+6}" y="${by2-4}" fill="#c084fc" font-size="12" font-family="JetBrains Mono,monospace">v₂(${v2[0]},${v2[1]})</text>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="white" filter="url(#glow3)"/>
+    ${extra}
+    <text x="16" y="282" fill="#4b5563" font-size="10" font-family="Inter,sans-serif">Hadamard H(B) = ${hadamard(v1,v2).toFixed(4)}</text>
+  </svg>`;
+}
+
+// ════════════════════════════════════════
+//  EVE TOGGLE
+// ════════════════════════════════════════
+function toggleEve() {
+  eveActive = !eveActive;
+  const btn = document.getElementById('eve-toggle');
+  btn.classList.toggle('active', eveActive);
+  document.getElementById('eve-label').textContent = eveActive ? 'Attacker (Eve) Active' : 'Enable Attacker (Eve)';
+  buildViz();
+}
+
+// ════════════════════════════════════════
+//  LOGS
+// ════════════════════════════════════════
+function clearLogs() {
+  document.getElementById('logs-body').innerHTML = `<div class="log-empty" id="log-empty">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    System ready. Select an algorithm and run simulation.
+  </div>`;
+}
+
+function addLog(msg, type='info') {
+  const body = document.getElementById('logs-body');
+  const empty = document.getElementById('log-empty');
+  if (empty) empty.remove();
+  const d = document.createElement('div');
+  d.className = `log-entry ${type}`;
+  const t = new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.innerHTML = `<span class="log-time">[${t}]</span>${msg}`;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+
+function autoLog(t) {
+  if (t.cat === 'geometry-ecc') {
+    if (t.id === 'ecc') {
+      addLog('ECC Point Addition: P + Q = R. Draw line through P,Q; intersect curve at −R; reflect over x-axis → R.', 'info');
+      addLog('Security: given P and kP, finding k is the ECDLP — no polynomial-time algorithm known.', 'info');
+    }
+    if (t.id === 'hasse') {
+      const hp = parseInt(params.hasse?.p) || 23;
+      const bound = 2*Math.sqrt(hp);
+      addLog(`Hasse Bounds for p=${hp}: N ∈ [${hp+1-Math.floor(bound)}, ${hp+1+Math.floor(bound)}]`, 'info');
+      addLog(`2√p = 2√${hp} ≈ ${bound.toFixed(4)}. Use Schoof's algorithm to compute #E(𝔽p) exactly.`, 'math');
+    }
+  }
+  if (t.cat === 'geometry-lattice') {
+    if (t.id === 'cvp') {
+      const v1 = parseVec(params.cvp?.v1 || '[4,1]'), v2 = parseVec(params.cvp?.v2 || '[1,3]');
+      const w  = parseVec(params.cvp?.w  || '[5.2,3.8]');
+      const res = babaiCVP(v1, v2, w);
+      const H = hadamard(v1, v2);
+      addLog(`Babai CVP: w=${JSON.stringify(w)}, t₁=${res.t1.toFixed(3)}, t₂=${res.t2.toFixed(3)}`, 'math');
+      addLog(`Rounded: a₁=${res.a1}, a₂=${res.a2} → lattice point v=(${res.v[0].toFixed(2)}, ${res.v[1].toFixed(2)})`, 'math');
+      addLog(`Distance ‖w−v‖ = ${res.dist.toFixed(4)}. Hadamard H(B) = ${H.toFixed(4)} (${H>0.7?'good':'poor'} basis)`, H>0.7?'success':'warn');
+    }
+    if (t.id === 'svp') {
+      const v1 = parseVec(params.svp?.v1 || '[3,1]'), v2 = parseVec(params.svp?.v2 || '[2,5]');
+      const red = gaussReduce([...v1],[...v2]);
+      addLog(`Gauss reduction of v₁=(${v1}), v₂=(${v2}):`, 'info');
+      red.steps.forEach(s => addLog('  ' + s, 'math'));
+      addLog(`Shortest vector: (${red.v1[0]},${red.v1[1]})  ‖v₁‖ = ${vecNorm(red.v1).toFixed(4)}`, 'success');
+    }
+  }
+}
+
+function onParamChange() {
+  const t = TOPICS.find(x => x.id === activeTopic);
+  buildViz();
+  clearLogs();
+  autoLog(t);
+}
+
+// ════════════════════════════════════════
+//  SIMULATION ENGINE
+// ════════════════════════════════════════
+function setRunBtn(running) {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = running;
+  btn.innerHTML = running
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Simulating…`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run Transmission Simulation`;
+}
+
+function movePkt(x, y, label) {
+  const pkt = document.getElementById('net-packet');
+  const circ = document.getElementById('pkt-circle');
+  const bg   = document.getElementById('pkt-label-bg');
+  const txt  = document.getElementById('pkt-label');
+  if (!pkt) return;
+  pkt.style.opacity = '1';
+  circ.setAttribute('cx', x); circ.setAttribute('cy', y);
+  bg.setAttribute('x', x-45); bg.setAttribute('y', y-50);
+  txt.setAttribute('x', x); txt.setAttribute('y', y-34);
+  if (label !== undefined) txt.textContent = label;
+}
+
+function hidePkt() {
+  const el = document.getElementById('net-packet');
+  if (el) el.style.opacity = '0';
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runSimulation() {
+  if (simRunning) return;
+  simRunning = true;
+  clearLogs();
+  setRunBtn(true);
+  const t = TOPICS.find(x => x.id === activeTopic);
+  const p = params[t.id];
+  buildViz();
+
+  // ── NTRU ──
+  if (t.id === 'ntru') {
+    addLog(`Bob publishes NTRU parameters: p=${p.p}, q=${p.q}.`, 'bob');
+    addLog(`Alice selects message m(x) = [${p.m}], blinding poly r(x) = [${p.r}].`, 'alice');
+    await delay(700);
+    addLog(`Alice computes c(x) = ${p.p}·r(x)·h(x) + m(x)  mod ${p.q}`, 'math');
+    addLog(`Ciphertext c(x) sent over channel.`, 'alice');
+    movePkt(PA.x, PA.y, 'c(x)');
+    await delay(1200);
+    movePkt((PA.x+PB.x)/2, PA.y, 'c(x)');
+    await delay(800);
+    if (eveActive) {
+      movePkt(PE.x, PE.y, 'c(x)');
+      addLog('⚠ Eve intercepts c(x)!', 'eve');
+      await delay(700);
+      addLog(`Eve must solve SVP on a high-dimensional lattice to find m(x) without Bob's private f(x). NP-Hard — computationally infeasible.`, 'eve');
+      await delay(1200);
+    }
+    movePkt(PB.x, PB.y, 'c(x)');
+    await delay(900);
+    addLog(`Bob computes a(x) = f(x)·c(x) mod ${p.q}. Reduces mod p=${p.p}.`, 'bob');
+    addLog(`Multiplies by f⁻¹(x) mod p to recover m(x) = [${p.m}].`, 'bob');
+    await delay(600);
+    hidePkt();
+    addLog(`✓ Bob successfully decrypted message: m(x) = [${p.m}]`, 'success');
+  }
+
+  // ── FHE ──
+  else if (t.id === 'fhe') {
+    const a = Number(p.a), b = Number(p.b), op = p.op;
+    const result = op === '+' ? a + b : a * b;
+    const opSym = op === '+' ? '+' : '×';
+    addLog(`Alice encrypts a=${a} → E(${a})  and  b=${b} → E(${b}) using LWE noise.`, 'alice');
+    movePkt(PA.x, PA.y, `E(${a}),E(${b})`);
+    await delay(900);
+    addLog(`Alice sends E(${a}), E(${b}) to Cloud Server without revealing a or b.`, 'alice');
+    movePkt((PA.x+PB.x)/2, PA.y, '🔒 encrypted');
+    await delay(900);
+    if (eveActive) {
+      movePkt(PE.x, PE.y, '???');
+      addLog(`⚠ Eve intercepts but sees only random-looking ciphertext. LWE noise hides all information.`, 'eve');
+      await delay(1000);
+    }
+    movePkt(PB.x, PB.y, 'compute…');
+    await delay(800);
+    addLog(`Cloud Server (no key!): performs homomorphic ${opSym}: E(${a}) ${opSym} E(${b}) = E(${result})`, 'bob');
+    addLog(`Homomorphism: Dec(E(a) ${opSym} E(b)) = a ${opSym} b = ${result}`, 'math');
+    await delay(900);
+    movePkt((PB.x+PA.x)/2, PA.y, `E(${result})`);
+    await delay(900);
+    movePkt(PA.x, PA.y, `E(${result})`);
+    await delay(700);
+    addLog(`Alice decrypts E(${result}) using her secret key → ${a} ${opSym} ${b} = ${result}`, 'alice');
+    hidePkt();
+    await delay(400);
+    addLog(`✓ Computed ${a} ${opSym} ${b} = ${result} — Cloud never saw the raw values!`, 'success');
+  }
+
+  // ── ECDH ──
+  else if (t.id === 'ecdh') {
+    const a = parseInt(p.a)||12, b = parseInt(p.b)||7;
+    const secret = a*b;
+    addLog(`Alice selects private key a=${a}. Computes public A = ${a}·G.`, 'alice');
+    addLog(`Bob selects private key b=${b}. Computes public B = ${b}·G.`, 'bob');
+    await delay(800);
+    movePkt(PA.x, PA.y, `A=${a}G`);
+    await delay(700);
+    movePkt((PA.x+PB.x)/2, PA.y, `A=${a}G`);
+    await delay(700);
+    if (eveActive) {
+      movePkt(PE.x, PE.y, `A=${a}G`);
+      addLog(`⚠ Eve intercepts A=${a}G and B=${b}G. Must compute a from a·G — this is ECDLP, computationally infeasible!`, 'eve');
+      await delay(1200);
+    }
+    movePkt(PB.x, PB.y, `A=${a}G`);
+    await delay(800);
+    movePkt((PB.x+PA.x)/2, PA.y, `B=${b}G`);
+    await delay(800);
+    movePkt(PA.x, PA.y, `B=${b}G`);
+    await delay(700);
+    addLog(`Alice: S = a·B = ${a}·(${b}G) = ${secret}G`, 'alice');
+    addLog(`Bob:   S = b·A = ${b}·(${a}G) = ${secret}G`, 'bob');
+    addLog(`Both derive identical shared secret = ${secret}·G`, 'math');
+    hidePkt();
+    await delay(300);
+    addLog(`✓ Shared secret S = ${secret}G established. Use as AES key via KDF.`, 'success');
+  }
+
+  // ── GGH ──
+  else if (t.id === 'ggh') {
+    const m = p.m, r = p.r;
+    addLog(`Alice generates good orthogonal basis V (private key). Computes bad basis W = U·V, det(U)=1.`, 'alice');
+    addLog(`Alice publishes W (bad basis, low Hadamard ratio) as public key.`, 'alice');
+    await delay(900);
+    addLog(`Bob's plaintext vector m=${m}. Noise vector r=${r} (δ-small perturbation).`, 'bob');
+    addLog(`Bob computes ciphertext: c = m·W + r`, 'bob');
+    addLog(`c is NOT on the lattice — it's near lattice point m·W.`, 'math');
+    movePkt(PA.x, PA.y, 'c=mW+r');
+    await delay(900);
+    movePkt((PA.x+PB.x)/2, PA.y, 'c=mW+r');
+    await delay(800);
+    if (eveActive) {
+      movePkt(PE.x, PE.y, 'c=mW+r');
+      addLog(`⚠ Eve applies Babai with BAD basis W. Low Hadamard ratio → rounding fails → wrong lattice point. CVP unsolvable with W!`, 'eve');
+      await delay(1300);
+    }
+    movePkt(PB.x, PB.y, 'c=mW+r');
+    await delay(800);
+    addLog(`Alice uses Babai's Algorithm with GOOD basis V (high Hadamard ratio ≈ 1):`, 'alice');
+    addLog(`c = t₁v₁+…+tₙvₙ → round each tᵢ → get mW (noise r removed by rounding!)`, 'math');
+    addLog(`Multiply by W⁻¹ → recover m = ${m}.`, 'alice');
+    hidePkt();
+    await delay(400);
+    addLog(`✓ Alice recovered plaintext vector m = ${m}`, 'success');
+  }
+
+  simRunning = false;
+  setRunBtn(false);
+}
+
+// ════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════
+(function init() {
+  buildSidebar();
+  const t = TOPICS[0];
+  buildParams(t);
+  buildBreakdown(t);
+  buildViz();
+  autoLog(t);
+})();
+</script>
+</body>
+</html>

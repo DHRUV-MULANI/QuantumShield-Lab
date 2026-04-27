@@ -1,0 +1,710 @@
+
+<!DOCTYPE html>
+<html style="color-scheme:dark">
+<head>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-mono,monospace);background:#111110;color:var(--color-text-primary)}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+:root{
+  --alice:#1D9E75;--bob:#4a9edd;--eve:#D85A30;--packet:#F2A623;
+  --color-background-primary:#111110;
+  --color-background-secondary:#1a1a18;
+  --color-border-tertiary:#2e2e2b;
+  --color-text-primary:#c2c0b6;
+  --color-text-secondary:#6b6b66;
+  --bg1:#111110;--bg2:#1a1a18;--border:#2e2e2b;--text:#c2c0b6;--muted:#6b6b66;
+}
+.outer{padding:8px 0;display:flex;flex-direction:column;gap:8px}
+/* TOP BAR */
+.topbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px}
+.topbar label{font-size:11px;color:var(--muted);font-family:var(--font-sans)}
+.topbar select{font-size:12px;padding:4px 8px;border:0.5px solid var(--border);border-radius:6px;background:var(--bg1);color:var(--text);font-family:var(--font-mono)}
+.topbar button{font-size:11px;padding:5px 12px;border:0.5px solid var(--border);border-radius:6px;background:var(--bg1);color:var(--text);cursor:pointer;font-family:var(--font-sans);transition:background .15s}
+.topbar button:hover{background:var(--bg2)}
+.topbar button.run{border-color:#1D9E75;color:#1D9E75;font-weight:500}
+.topbar button.run:hover{background:#0f2e22}
+.topbar button.atk{border-color:#D85A30;color:#D85A30}
+.topbar button.atk:hover{background:#2e1208}
+.toggle-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:var(--font-sans)}
+/* MAIN LAYOUT */
+.main{display:grid;grid-template-columns:180px 1fr 180px;gap:8px;min-height:460px}
+/* PANELS */
+.panel{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:10px;overflow-y:auto;max-height:500px}
+.panel-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;font-family:var(--font-sans)}
+.param-row{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.param-row label{font-size:10px;color:var(--muted);font-family:var(--font-sans)}
+.param-row input,.param-row textarea{font-size:11px;padding:4px 6px;border:0.5px solid var(--border);border-radius:5px;background:var(--bg1);color:var(--text);font-family:var(--font-mono);width:100%}
+.param-row textarea{resize:none;height:48px}
+.tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-weight:500;margin-top:2px}
+.tag.pub{background:#0f2e22;color:#1D9E75}
+.tag.priv{background:#2e1208;color:#e07050}
+.tag.enc{background:#0d1e30;color:#4a9edd}
+/* CANVAS AREA */
+.canvas-wrap{display:flex;flex-direction:column;gap:6px}
+.canvas-top{display:flex;justify-content:space-between;align-items:center;padding:0 4px}
+.canvas-top span{font-size:11px;color:var(--muted);font-family:var(--font-sans)}
+.sim-canvas{position:relative;background:var(--bg1);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;height:300px}
+canvas#simcanvas{display:block;width:100%;height:100%}
+/* PROCESS STEPS */
+.steps-wrap{background:var(--bg1);border:0.5px solid var(--border);border-radius:10px;padding:10px}
+.steps-title{font-size:11px;color:var(--muted);font-family:var(--font-sans);margin-bottom:6px;font-weight:500}
+.steps-grid{display:flex;gap:4px;flex-wrap:wrap}
+.step-card{flex:1;min-width:80px;background:var(--bg2);border:0.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:var(--font-mono);cursor:pointer;transition:border-color .15s;border-left:3px solid transparent}
+.step-card:hover{border-color:var(--border);border-left-color:#1D9E75}
+.step-card.active{border-left-color:#1D9E75;background:#0f2e22}
+.step-card.active *{color:#34d399!important}
+.step-num{font-size:9px;color:var(--muted);font-family:var(--font-sans)}
+.step-label{font-size:10px;font-weight:500;color:var(--text);font-family:var(--font-sans)}
+.step-formula{font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
+/* FORMULA BOX */
+.formula-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:10px}
+.formula-main{font-size:13px;color:var(--text);font-family:var(--font-mono);margin-bottom:6px;padding:6px 8px;background:var(--bg1);border-radius:6px;border:0.5px solid var(--border)}
+.formula-explain{font-size:11px;color:var(--muted);line-height:1.5;font-family:var(--font-sans)}
+/* LOG */
+.log-wrap{background:var(--bg1);border:0.5px solid var(--border);border-radius:10px;padding:8px 10px;max-height:100px;overflow-y:auto}
+.log-entry{font-size:10px;font-family:var(--font-mono);padding:2px 0;border-bottom:0.5px solid var(--border)}
+.log-entry:last-child{border:none}
+.log-alice{color:#1D9E75}
+.log-bob{color:#185FA5}
+.log-eve{color:#D85A30}
+.log-sys{color:var(--muted)}
+/* BOTTOM FORMULA */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* Attacker badge */
+.atk-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#2e1208;border:1.5px solid #D85A30;border-radius:8px;padding:6px 12px;font-size:11px;color:#e07050;font-family:var(--font-mono);display:none;z-index:10;text-align:center}
+.atk-badge.show{display:block}
+/* value display */
+.val-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;font-family:var(--font-mono);color:var(--text);margin-top:4px;word-break:break-all}
+.val-label{font-size:9px;color:var(--muted);font-family:var(--font-sans)}
+.divider{height:0.5px;background:var(--border);margin:6px 0}
+.badge-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Interactive cryptography simulation: Alice sends encrypted message to Bob, with attacker Eve in the middle. Choose from 8 cryptosystems.</h2>
+<div class="outer">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <label>Cryptosystem</label>
+  <select id="scheme" onchange="loadScheme()">
+    <option value="ggh">GGH (Lattice)</option>
+    <option value="svp">SVP (Lattice)</option>
+    <option value="cvp">CVP (Lattice)</option>
+    <option value="ecc">ECC (Public Key)</option>
+    <option value="ecdh">ECDH (Key Exchange)</option>
+    <option value="ntru">NTRU (Post-Quantum)</option>
+    <option value="fhe">FHE (Homomorphic)</option>
+    <option value="hasse">Hasse ECC</option>
+  </select>
+  <button class="run" onclick="runSim()">▶ Simulate</button>
+  <button onclick="stepSim()">Step →</button>
+  <button onclick="resetSim()">↺ Reset</button>
+  <div class="toggle-wrap">
+    <input type="checkbox" id="atk-toggle" onchange="toggleAttacker()">
+    <label for="atk-toggle" style="cursor:pointer;color:#D85A30">Eve (Attacker)</label>
+  </div>
+  <div class="toggle-wrap">
+    <input type="checkbox" id="wrap-toggle" checked>
+    <label for="wrap-toggle" style="cursor:pointer">Show wrapping</label>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+<!-- ALICE PANEL -->
+<div class="panel">
+  <div class="panel-title" style="color:#1D9E75">Alice (Sender)</div>
+  <div class="param-row">
+    <label>Message M</label>
+    <input id="msg" value="42" oninput="recalc()">
+    <span class="tag enc">plaintext</span>
+  </div>
+  <div id="alice-params"></div>
+  <div class="divider"></div>
+  <div class="val-label">Encrypted c(x)</div>
+  <div class="val-box" id="ct-display">—</div>
+  <div class="badge-row" id="alice-badges"></div>
+</div>
+
+<!-- CENTER CANVAS -->
+<div class="canvas-wrap">
+  <div class="canvas-top">
+    <span id="scheme-label">GGH Lattice Cryptosystem</span>
+    <span id="step-label" style="color:#1D9E75">Ready</span>
+  </div>
+  <div class="sim-canvas">
+    <canvas id="simcanvas"></canvas>
+    <div class="atk-badge" id="atk-badge">Eve intercepted!<br><span id="eve-got" style="font-size:9px"></span></div>
+  </div>
+
+  <!-- STEP CARDS -->
+  <div class="steps-wrap">
+    <div class="steps-title">Process steps — click to inspect</div>
+    <div class="steps-grid" id="step-cards"></div>
+  </div>
+
+  <!-- FORMULA DISPLAY -->
+  <div class="bottom-row">
+    <div class="formula-box">
+      <div class="val-label">Active formula</div>
+      <div class="formula-main" id="formula-display">Select a step</div>
+      <div class="formula-explain" id="formula-explain">Click a step card above</div>
+    </div>
+    <div class="formula-box">
+      <div class="val-label">Decrypted M'</div>
+      <div class="formula-main" id="dec-display" style="color:#1D9E75">—</div>
+      <div class="formula-explain" id="dec-explain">After decryption</div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-wrap" id="sim-log"></div>
+</div>
+
+<!-- BOB PANEL -->
+<div class="panel">
+  <div class="panel-title" style="color:#185FA5">Bob (Receiver)</div>
+  <div id="bob-params"></div>
+  <div class="divider"></div>
+  <div class="val-label">Received c(x)</div>
+  <div class="val-box" id="bob-ct">—</div>
+  <div class="val-label" style="margin-top:6px">Decrypted M'</div>
+  <div class="val-box" id="bob-dec" style="color:#1D9E75">—</div>
+  <div class="badge-row" id="bob-badges"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /outer -->
+
+<script>
+const canvas = document.getElementById('simcanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 480; canvas.height = 300;
+
+let simState = {step:0, running:false, attacker:false, interval:null, packets:[], wrapState:0};
+let scheme = 'ggh';
+
+const SCHEMES = {
+  ggh:{
+    name:'GGH Lattice Cryptosystem',
+    type:'Lattice Crypto',
+    formula:'c = m·W + r',
+    aliceParams:[
+      {id:'m',label:'Message m',val:'(2,-5)',hint:'integer vector'},
+      {id:'r',label:'Perturbation r',val:'(1,-1)',hint:'small random error'},
+    ],
+    bobParams:[
+      {id:'priv_v1',label:'Private v₁ (good basis)',val:'(17,0)',hint:'priv key'},
+      {id:'priv_v2',label:'Private v₂',val:'(0,19)',hint:'priv key'},
+      {id:'pub_w1',label:'Public w₁ (bad basis)',val:'(34,57)',hint:'pub key'},
+      {id:'pub_w2',label:'Public w₂',val:'(51,95)',hint:'pub key'},
+    ],
+    steps:[
+      {label:'Key Gen',formula:'V=private, W=UV',explain:'Bob generates a good private basis V and transforms it with unimodular U to get the public bad basis W.'},
+      {label:'Encrypt',formula:'c = m·W + r',explain:'Alice takes message m, multiplies by public W, adds small random error r to get ciphertext c.'},
+      {label:'Transmit',formula:'c → Bob',explain:'Ciphertext c is sent over the channel. Attacker sees c but cannot easily decode without the good basis.'},
+      {label:'Babai',formula:'v ≈ Babai(c,V)',explain:'Bob uses his good private basis V with Babai\'s closest vertex algorithm to find the nearest lattice point v.'},
+      {label:'Decrypt',formula:'m = v·W⁻¹',explain:'Bob multiplies the recovered lattice point v by inverse of W to get original message m back.'},
+    ],
+    encrypt(p){
+      const m=p.m||'(2,-5)', r=p.r||'(1,-1)';
+      const ct=`c = ${m}·W + ${r}`;
+      return {ct, dec:`m' = ${m}`, eve:`Sees c but needs V to solve CVP`};
+    }
+  },
+  svp:{
+    name:'Shortest Vector Problem',
+    type:'Lattice Problem',
+    formula:'Find v∈L: ‖v‖ minimal',
+    aliceParams:[
+      {id:'v1',label:'Basis v₁',val:'(31,59)',hint:''},
+      {id:'v2',label:'Basis v₂',val:'(37,70)',hint:''},
+    ],
+    bobParams:[
+      {id:'target',label:'Target vector w',val:'(3,-1)',hint:'shortest vector'},
+    ],
+    steps:[
+      {label:'Input Basis',formula:'{v₁,v₂}',explain:'Start with a lattice basis — any two linearly independent vectors generating the lattice L.'},
+      {label:'Gram-Schmidt',formula:'v₂* = v₂ - (v₁·v₂/‖v₁‖²)v₁',explain:'Project v₂ perpendicular to v₁ using Gram-Schmidt orthogonalization. This tells us the "ideal" reduced vector.'},
+      {label:'Reduce',formula:'v₂ ← v₂ - t·v₁',explain:'Replace v₂ with v₂ - t·v₁ where t = round(v₁·v₂ / ‖v₁‖²). This gives a more orthogonal basis.'},
+      {label:'Check',formula:'‖v₁‖ ≤ ‖v₂‖?',explain:'If the basis is reduced (‖v₁‖≤‖v₂‖ and |v₁·v₂/‖v₁‖²| ≤ ½), stop. Otherwise swap and repeat.'},
+      {label:'SVP Solution',formula:'v₁ = shortest vector',explain:'The first vector in the reduced basis is the shortest nonzero vector in the lattice — the SVP solution.'},
+    ],
+    encrypt(p){
+      return {ct:'Lattice L({v₁,v₂})', dec:'(3,-1) shortest', eve:'SVP is NP-hard to solve'};
+    }
+  },
+  cvp:{
+    name:'Closest Vector Problem',
+    type:'Lattice Problem',
+    formula:'Find v∈L: ‖w-v‖ minimal',
+    aliceParams:[
+      {id:'w',label:'Target point w',val:'(53172,81743)',hint:'not in lattice'},
+    ],
+    bobParams:[
+      {id:'bv1',label:'Basis v₁',val:'(137,312)',hint:''},
+      {id:'bv2',label:'Basis v₂',val:'(215,-187)',hint:''},
+    ],
+    steps:[
+      {label:'Babai Setup',formula:'w = t₁v₁ + t₂v₂',explain:'Write target w as a real-coefficient linear combination of the basis vectors.'},
+      {label:'Round coeffs',formula:'aᵢ = round(tᵢ)',explain:'Round each real coefficient tᵢ to the nearest integer aᵢ — this is Babai\'s rounding step.'},
+      {label:'Approx CVP',formula:'v = Σ aᵢvᵢ',explain:'Compute the lattice vector v using rounded integer coefficients. This is the approximate closest vector.'},
+      {label:'Distance',formula:'‖w - v‖',explain:'Compute how far our approximation is from the true target. A good basis gives a small distance.'},
+      {label:'Hadamard',formula:'H(B) = (det L / ∏‖vᵢ‖)^(1/n)',explain:'Hadamard ratio measures basis quality. H ≈ 1 means the basis is near-orthogonal — gives accurate CVP solutions.'},
+    ],
+    encrypt(p){
+      return {ct:'Target: (53172,81743)', dec:'v ≈ (53159,81818)', eve:'Cannot solve CVP without good basis'};
+    }
+  },
+  ecc:{
+    name:'Elliptic Curve Cryptography',
+    type:'Public Key',
+    formula:'y² = x³ + ax + b (mod p)',
+    aliceParams:[
+      {id:'msg_ecc',label:'Message M',val:'25',hint:'integer'},
+      {id:'k',label:'Random k',val:'7',hint:'ephemeral key'},
+    ],
+    bobParams:[
+      {id:'d',label:'Private key d',val:'11',hint:'secret integer'},
+      {id:'Gx',label:'Generator G (x)',val:'5',hint:'base point'},
+      {id:'p_ecc',label:'Prime p',val:'97',hint:'field size'},
+      {id:'a_ecc',label:'Curve param a',val:'2',hint:'y²=x³+ax+b'},
+    ],
+    steps:[
+      {label:'Curve Setup',formula:'E: y²=x³+ax+b mod p',explain:'Define elliptic curve over finite field Fₚ. All arithmetic is mod p. Choose generator point G of order n.'},
+      {label:'Key Gen',formula:'Q = d·G',explain:'Bob\'s private key is secret integer d. Public key Q = d·G is point multiplication on the curve — fast to compute, infeasible to reverse.'},
+      {label:'Encrypt',formula:'C₁=k·G, C₂=M+k·Q',explain:'Alice picks random k, computes C₁=kG and C₂=M+kQ. Sends (C₁,C₂) as ciphertext.'},
+      {label:'Transmit',formula:'(C₁,C₂) → Bob',explain:'Two curve points are transmitted. Eve sees them but without d cannot compute k·Q.'},
+      {label:'Decrypt',formula:"M = C₂ - d·C₁",explain:'Bob computes d·C₁ = d·k·G = k·Q, then M = C₂ - k·Q recovers plaintext.'},
+    ],
+    encrypt(p){
+      const d=parseInt(p.d||11), k=parseInt(p.k||7), M=parseInt(p.msg_ecc||25);
+      return {ct:`C₁=k·G, C₂=M+k·Q`, dec:`M=${M}`, eve:`Sees (C₁,C₂), needs d to find k·Q`};
+    }
+  },
+  ecdh:{
+    name:'Elliptic Curve Diffie-Hellman',
+    type:'Key Exchange',
+    formula:'Shared = a·B = b·A = ab·G',
+    aliceParams:[
+      {id:'a',label:"Alice's secret a",val:'6',hint:'private'},
+      {id:'Gx2',label:'Generator G',val:'(5,1)',hint:'curve point'},
+    ],
+    bobParams:[
+      {id:'b',label:"Bob's secret b",val:'15',hint:'private'},
+      {id:'p2',label:'Prime p',val:'97',hint:'field'},
+    ],
+    steps:[
+      {label:'Setup',formula:'Agree on G, p, curve',explain:'Alice and Bob publicly agree on curve parameters: prime p, curve equation, and base point G.'},
+      {label:'Alice pub',formula:'A = a·G',explain:'Alice computes her public key A = a·G using her private scalar a.'},
+      {label:'Bob pub',formula:'B = b·G',explain:'Bob computes his public key B = b·G using his private scalar b.'},
+      {label:'Exchange',formula:'A ↔ B (public)',explain:'Alice sends A to Bob, Bob sends B to Alice. These are curve points — safe to be public.'},
+      {label:'Shared Key',formula:'S = a·B = b·A',explain:'Alice computes a·B = ab·G. Bob computes b·A = ab·G. Both get the same secret point S — the shared key!'},
+    ],
+    encrypt(p){
+      return {ct:'Public: A=a·G, B=b·G', dec:'Shared S = ab·G', eve:'Cannot compute ab·G from A,B without discrete log'};
+    }
+  },
+  ntru:{
+    name:'NTRU Encryption',
+    type:'Post-Quantum',
+    formula:'e = r·h + m (mod q)',
+    aliceParams:[
+      {id:'m_ntru',label:'Message m(x)',val:'x+1',hint:'polynomial'},
+      {id:'r_ntru',label:'Random r(x)',val:'x-1',hint:'blinding polynomial'},
+    ],
+    bobParams:[
+      {id:'f_ntru',label:'Private f(x)',val:'1+x-x²',hint:'invertible mod p,q'},
+      {id:'g_ntru',label:'Private g(x)',val:'x+x²',hint:'small polynomial'},
+      {id:'N_ntru',label:'Ring degree N',val:'5',hint:'Z[x]/(xᴺ-1)'},
+      {id:'q_ntru',label:'Modulus q',val:'32',hint:'large mod'},
+      {id:'p_ntru',label:'Modulus p',val:'3',hint:'small mod'},
+    ],
+    steps:[
+      {label:'Key Gen',formula:'h = p·g·f⁻¹ mod q',explain:'Bob computes public key h from private polynomials f,g in ring Z[x]/(xᴺ-1). f must be invertible mod p and q.'},
+      {label:'Encrypt',formula:'e = r·h + m mod q',explain:'Alice encodes message as polynomial m, picks random blinding r. Ciphertext e = r·h + m mod q.'},
+      {label:'Transmit',formula:'e(x) → Bob',explain:'The polynomial ciphertext e is sent. All coefficients are mod q. Attacker sees polynomial but cannot recover m.'},
+      {label:'Decrypt step 1',formula:'a = f·e mod q',explain:'Bob multiplies ciphertext by his private f. The r·h term becomes p·r·g (small), separating from m·f.'},
+      {label:'Decrypt step 2',formula:"m = f⁻¹·a mod p",explain:'Take a mod p (kills the p·r·g term), then multiply by f⁻¹ mod p to recover the original message polynomial m.'},
+    ],
+    encrypt(p){
+      return {ct:`e(x) = r·h + m mod q`, dec:`m(x) = ${p.m_ntru||'x+1'}`, eve:'Cannot solve NTRU problem — post-quantum secure'};
+    }
+  },
+  fhe:{
+    name:'Fully Homomorphic Encryption',
+    type:'Cloud Security',
+    formula:'Eval(f, Enc(x)) = Enc(f(x))',
+    aliceParams:[
+      {id:'m1',label:'Data m₁',val:'7',hint:'input value'},
+      {id:'m2',label:'Data m₂',val:'3',hint:'input value'},
+      {id:'op',label:'Operation',val:'add',hint:'add / multiply'},
+    ],
+    bobParams:[
+      {id:'sk_fhe',label:'Secret key sk',val:'1011',hint:'binary string'},
+      {id:'pk_fhe',label:'Public key pk',val:'auto',hint:'derived from sk'},
+      {id:'noise_fhe',label:'Noise level',val:'small',hint:'must be < limit'},
+    ],
+    steps:[
+      {label:'Encrypt m₁',formula:'c₁ = Enc(m₁)',explain:'Alice encrypts her data m₁ with Bob\'s public key. Ciphertext c₁ contains m₁ hidden under noise.'},
+      {label:'Encrypt m₂',formula:'c₂ = Enc(m₂)',explain:'Alice encrypts m₂ similarly. Both ciphertexts are sent to the cloud for processing.'},
+      {label:'Cloud Eval',formula:'c_out = Eval(f,c₁,c₂)',explain:'The cloud server computes operation f (add/multiply) DIRECTLY on ciphertexts — without ever decrypting! This is the magic of FHE.'},
+      {label:'Bootstrapping',formula:'c_fresh = Boot(c_out)',explain:'After each operation noise grows. Bootstrapping refreshes the ciphertext, resetting noise so more operations can be done.'},
+      {label:'Decrypt',formula:'m_out = Dec(sk, c_out)',explain:'Alice decrypts the result. She gets f(m₁,m₂) — computed on encrypted data she never revealed to the cloud.'},
+    ],
+    encrypt(p){
+      const m1=parseInt(p.m1||7),m2=parseInt(p.m2||3),op=p.op||'add';
+      const res=op==='add'?m1+m2:m1*m2;
+      return {ct:`Enc(${m1}), Enc(${m2})`, dec:`f(m₁,m₂)=${res}`, eve:'Cloud sees only ciphertexts — FHE hides all values'};
+    }
+  },
+  hasse:{
+    name:"Hasse's Theorem (ECC)",
+    type:'ECC Theory',
+    formula:'|#E - (p+1)| ≤ 2√p',
+    aliceParams:[
+      {id:'p_h',label:'Prime p',val:'7',hint:'field size'},
+      {id:'a_h',label:'Curve a',val:'1',hint:'y²=x³+ax+b'},
+      {id:'b_h',label:'Curve b',val:'1',hint:''},
+    ],
+    bobParams:[
+      {id:'N_h',label:'#E (points)',val:'auto',hint:'count on curve'},
+    ],
+    steps:[
+      {label:'Define Curve',formula:'E: y²=x³+ax+b mod p',explain:'Choose prime p and curve parameters a,b (with 4a³+27b²≠0 for non-singular curve).'},
+      {label:'Count Points',formula:'#E = |{(x,y):y²≡x³+ax+b}|+1',explain:'Count all (x,y) pairs satisfying the curve equation mod p, plus the point at infinity. This is #E.'},
+      {label:"Hasse Bound",formula:'|#E-(p+1)| ≤ 2√p',explain:"Hasse's theorem guarantees the number of points is close to p+1. The deviation |t| = |#E-(p+1)| is the trace of Frobenius."},
+      {label:'Group Order',formula:'n = #E',explain:'The curve points form an abelian group of order n = #E. This order determines the security of ECC — n must be large with large prime factor.'},
+      {label:'Security',formula:'DLP: Q=nG hard',explain:'Security relies on discrete log problem: given G and Q=nG, finding n is computationally infeasible for large p.'},
+    ],
+    encrypt(p){
+      const pr=parseInt(p.p_h||7);
+      const bound=Math.floor(2*Math.sqrt(pr));
+      return {ct:`#E in [${pr+1-bound}, ${pr+1+bound}]`, dec:`Hasse bound: 2√${pr}≈${bound}`, eve:`Eve cannot predict exact #E without counting`};
+    }
+  }
+};
+
+function loadScheme(){
+  scheme = document.getElementById('scheme').value;
+  const s = SCHEMES[scheme];
+  document.getElementById('scheme-label').textContent = s.name;
+
+  // Alice params
+  let ah='';
+  s.aliceParams.forEach(p=>{
+    const t=p.hint.includes('polynomial')?'textarea':'input';
+    ah+=`<div class="param-row"><label>${p.label} <span style="color:var(--muted);font-size:9px">(${p.hint})</span></label><${t} id="ap_${p.id}" oninput="recalc()"${t==='textarea'?' rows="2"':''}>${p.hint.includes('polynomial')?p.val:''}</${t}>`;
+    if(t!=='textarea') ah=ah.slice(0,-2)+'>';
+    ah+=`</div>`;
+  });
+  document.getElementById('alice-params').innerHTML=ah;
+  s.aliceParams.forEach(p=>{
+    const el=document.getElementById('ap_'+p.id);
+    if(el && el.tagName!=='TEXTAREA') el.value=p.val;
+    if(el && el.tagName==='TEXTAREA') el.value=p.val;
+  });
+
+  // Bob params
+  let bh='';
+  const bobTags=['<span class="tag priv">private key</span>','<span class="tag pub">public key</span>','<span class="tag enc">param</span>'];
+  s.bobParams.forEach((p,i)=>{
+    const isPriv=p.hint.includes('priv')||p.hint.includes('secret');
+    const isPub=p.hint.includes('pub');
+    const tag=isPriv?'<span class="tag priv">private</span>':isPub?'<span class="tag pub">public</span>':'<span class="tag enc">param</span>';
+    bh+=`<div class="param-row"><label>${p.label} ${tag}</label><input id="bp_${p.id}" value="${p.val}" oninput="recalc()"></div>`;
+  });
+  document.getElementById('bob-params').innerHTML=bh;
+
+  // Step cards
+  let sh='';
+  s.steps.forEach((st,i)=>{
+    sh+=`<div class="step-card" id="sc_${i}" onclick="showStep(${i})"><div class="step-num">Step ${i+1}</div><div class="step-label">${st.label}</div><div class="step-formula">${st.formula}</div></div>`;
+  });
+  document.getElementById('step-cards').innerHTML=sh;
+
+  resetSim();
+  recalc();
+}
+
+function getParams(){
+  const s=SCHEMES[scheme];
+  const p={};
+  s.aliceParams.forEach(ap=>{const el=document.getElementById('ap_'+ap.id);if(el)p[ap.id]=el.value;});
+  s.bobParams.forEach(bp=>{const el=document.getElementById('bp_'+bp.id);if(el)p[bp.id]=el.value;});
+  return p;
+}
+
+function recalc(){
+  const s=SCHEMES[scheme];
+  const p=getParams();
+  const res=s.encrypt(p);
+  document.getElementById('ct-display').textContent=res.ct;
+  document.getElementById('bob-ct').textContent=res.ct;
+  document.getElementById('dec-display').textContent=res.dec;
+  document.getElementById('bob-dec').textContent=res.dec;
+  document.getElementById('dec-explain').textContent='Decrypted successfully';
+  
+  const aliceBadges=`<span class="tag pub">key: public W</span><span class="tag enc">sends: c(x)</span>`;
+  const bobBadges=`<span class="tag priv">private key</span><span class="tag pub">verifies: M'=M</span>`;
+  document.getElementById('alice-badges').innerHTML=aliceBadges;
+  document.getElementById('bob-badges').innerHTML=bobBadges;
+}
+
+function showStep(i){
+  document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('sc_'+i).classList.add('active');
+  const s=SCHEMES[scheme].steps[i];
+  document.getElementById('formula-display').textContent=s.formula;
+  document.getElementById('formula-explain').textContent=s.explain;
+  simState.step=i;
+  drawFrame(i);
+}
+
+// ── CANVAS ANIMATION ────────────────────────────────────────────────
+let animT=0, animPackets=[], animStep=0, animRunning=false, animFrame=null;
+const COLORS={alice:'#1D9E75',bob:'#185FA5',eve:'#D85A30',packet:'#F2A623',arrow:'#888780',bg:'transparent'};
+
+function drawFrame(step){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  
+  const bg='#111110';
+  const line='#2e2e2b';
+  const txt='#c2c0b6';
+
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Channel line
+  ctx.strokeStyle=line; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(90,H/2); ctx.lineTo(W-90,H/2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Alice node
+  drawNode(ctx,60,H/2,38,'Alice',COLORS.alice,step>0);
+  // Bob node
+  drawNode(ctx,W-60,H/2,38,'Bob',COLORS.bob,step>3);
+
+  // Eve node (if active)
+  if(simState.attacker){
+    drawNode(ctx,W/2,H/2-60,28,'Eve',COLORS.eve,true,true);
+    ctx.strokeStyle=COLORS.eve; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(W/2,H/2-32); ctx.lineTo(W/2,H/2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw packets based on step
+  drawStepPackets(step,W,H,txt);
+
+  // Step label
+  ctx.fillStyle=txt; ctx.font='11px monospace'; ctx.textAlign='center';
+  const s=SCHEMES[scheme];
+  if(step<s.steps.length) ctx.fillText(s.steps[step].label+': '+s.steps[step].formula, W/2, 24);
+
+  drawAnimPackets(W,H);
+}
+
+function drawNode(ctx,x,y,r,label,color,active,evil){
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=active?color+'22':color+'11';
+  ctx.fill();
+  ctx.strokeStyle=color; ctx.lineWidth=active?2:1;
+  ctx.stroke();
+  if(evil){ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);}
+  ctx.fillStyle=color; ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(label[0],x,y);
+  ctx.font='10px monospace'; ctx.fillStyle=color;
+  ctx.fillText(label,x,y+r+14);
+  ctx.textBaseline='alphabetic';
+}
+
+function drawStepPackets(step,W,H,txt){
+  const cx=W/2, cy=H/2;
+  const s=SCHEMES[scheme];
+  
+  if(step===0){
+    // Key gen — show lock at Bob
+    drawLockIcon(ctx,W-60,H/2-56,COLORS.bob);
+    ctx.fillStyle=COLORS.bob; ctx.font='9px monospace'; ctx.textAlign='center';
+    ctx.fillText('generating keys',W-60,H/2+60);
+  }
+  if(step===1){
+    // Encrypt — show M → c wrapping animation at Alice
+    drawWrap(ctx,90,H/2,simState.wrapState);
+    ctx.fillStyle=COLORS.alice; ctx.font='9px monospace'; ctx.textAlign='center';
+    ctx.fillText('M wrapped → c',90,H/2+56);
+  }
+  if(step===2){
+    // Transmit — packet in middle
+    drawPacket(ctx,cx,cy,COLORS.packet,'c(x)');
+    drawArrow(ctx,90+44,cy,cx-20,cy,COLORS.alice);
+    drawArrow(ctx,cx+20,cy,W-90-44,cy,COLORS.bob);
+  }
+  if(step===3){
+    // Decrypt step 1
+    drawPacket(ctx,W-100,cy,COLORS.bob,'Decode');
+    ctx.fillStyle=COLORS.bob; ctx.font='9px monospace'; ctx.textAlign='center';
+    ctx.fillText(s.steps[3].formula,W-60,H/2+60);
+  }
+  if(step>=4){
+    // Decrypt complete — unwrap
+    drawUnwrap(ctx,W-60,H/2,1);
+    ctx.fillStyle=COLORS.alice; ctx.font='10px monospace'; ctx.textAlign='center';
+    ctx.fillText("M' = M ✓",W/2,H/2+80);
+  }
+
+  if(simState.attacker && step===2){
+    // Eve grabbing packet
+    drawPacket(ctx,cx,cy-30,COLORS.eve,'?c?');
+    ctx.strokeStyle=COLORS.eve; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx,cy-32); ctx.lineTo(cx,H/2-68); ctx.stroke();
+  }
+}
+
+function drawWrap(ctx,x,y,t){
+  const layers=['#0f2e22','#166845','#1D9E75'];
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.roundRect(x-24+i*3,y-16+i*2,48-i*6,32-i*4,4+i*2);
+    ctx.strokeStyle=layers[i]; ctx.lineWidth=1+i*0.5; ctx.stroke();
+  }
+  ctx.fillStyle='#1D9E75'; ctx.font='bold 11px monospace'; ctx.textAlign='center';
+  ctx.fillText('M',x,y+4);
+}
+
+function drawUnwrap(ctx,x,y,t){
+  ctx.beginPath(); ctx.roundRect(x-16,y-12,32,24,4); ctx.strokeStyle='#185FA5'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#185FA5'; ctx.font='bold 11px monospace'; ctx.textAlign='center';
+  ctx.fillText("M'",x,y+4);
+  // Cancellation marks
+  ctx.strokeStyle='#D85A30'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x-30,y-20); ctx.lineTo(x-30,y+20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+30,y-20); ctx.lineTo(x+30,y+20); ctx.stroke();
+  ctx.fillStyle='#D85A30'; ctx.font='8px monospace'; ctx.textAlign='left';
+  ctx.fillText('r cancel',x-50,y-24);
+}
+
+function drawLockIcon(ctx,x,y,color){
+  ctx.strokeStyle=color; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(x-8,y,16,14,2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x,y,7,Math.PI,0); ctx.stroke();
+}
+
+function drawPacket(ctx,x,y,color,label){
+  ctx.fillStyle=color+'33'; ctx.strokeStyle=color; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(x-20,y-12,40,24,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=color; ctx.font='bold 9px monospace'; ctx.textAlign='center';
+  ctx.fillText(label,x,y+4);
+}
+
+function drawArrow(ctx,x1,y1,x2,y2,color){
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-10*Math.cos(ang-0.4),y2-10*Math.sin(ang-0.4));
+  ctx.lineTo(x2-10*Math.cos(ang+0.4),y2-10*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+}
+
+function drawAnimPackets(W,H){
+  animPackets.forEach(pk=>{
+    const x=pk.sx+(pk.tx-pk.sx)*pk.t;
+    const y=pk.sy+(pk.ty-pk.sy)*pk.t+(simState.attacker?-30*Math.sin(Math.PI*pk.t):0);
+    drawPacket(ctx,x,y,pk.color,pk.label);
+  });
+}
+
+// ── SIMULATION CONTROL ──────────────────────────────────────────────
+let stepIdx=0;
+function runSim(){
+  resetSim();
+  stepIdx=0;
+  simState.running=true;
+  log('sys','Simulation started: '+SCHEMES[scheme].name);
+  autoStep();
+}
+
+function autoStep(){
+  if(stepIdx>=SCHEMES[scheme].steps.length){
+    simState.running=false;
+    document.getElementById('step-label').textContent='Complete ✓';
+    log('sys','Simulation complete');
+    // Final: show success
+    const res=SCHEMES[scheme].encrypt(getParams());
+    document.getElementById('bob-dec').textContent=res.dec;
+    document.getElementById('dec-display').textContent=res.dec;
+    return;
+  }
+  showStep(stepIdx);
+  document.getElementById('step-label').textContent=`Step ${stepIdx+1}/${SCHEMES[scheme].steps.length}`;
+  log('sys','Step '+(stepIdx+1)+': '+SCHEMES[scheme].steps[stepIdx].label);
+  if(stepIdx===0) log('bob','Generating key pair...');
+  if(stepIdx===1){log('alice','Encrypting message M...');simState.wrapState=1;}
+  if(stepIdx===2){
+    log('alice','Transmitting ciphertext c(x)...');
+    animPackets=[{sx:90,sy:canvas.height/2,tx:canvas.width-90,ty:canvas.height/2,t:0,color:COLORS.packet,label:'c(x)'}];
+    if(simState.attacker){
+      document.getElementById('atk-badge').classList.add('show');
+      const res=SCHEMES[scheme].encrypt(getParams());
+      document.getElementById('eve-got').textContent=res.eve;
+      log('eve','Eve intercepted: '+res.eve);
+      setTimeout(()=>document.getElementById('atk-badge').classList.remove('show'),2000);
+    }
+  }
+  if(stepIdx===3) log('bob','Decrypting with private key...');
+  if(stepIdx===4){
+    log('bob','Decryption successful! M\'=M');
+    log('alice','Message delivered securely');
+  }
+  stepIdx++;
+  simState.interval=setTimeout(autoStep,1600);
+}
+
+function stepSim(){
+  if(stepIdx<SCHEMES[scheme].steps.length){showStep(stepIdx);stepIdx++;}
+}
+
+function resetSim(){
+  clearTimeout(simState.interval);
+  stepIdx=0; animPackets=[];
+  simState.running=false; simState.wrapState=0;
+  document.getElementById('step-label').textContent='Ready';
+  document.getElementById('atk-badge').classList.remove('show');
+  document.querySelectorAll('.step-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('formula-display').textContent='Select a step';
+  document.getElementById('formula-explain').textContent='Click a step card above';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawFrame(-1);
+  clearLog();
+}
+
+function toggleAttacker(){simState.attacker=document.getElementById('atk-toggle').checked; drawFrame(simState.step||0);}
+
+// ── LOG ─────────────────────────────────────────────────────────────
+function log(who,msg){
+  const d=document.getElementById('sim-log');
+  const cls={'alice':'log-alice','bob':'log-bob','eve':'log-eve','sys':'log-sys'}[who]||'log-sys';
+  const e=document.createElement('div'); e.className='log-entry '+cls;
+  e.textContent=(who==='sys'?'→ ':`[${who.toUpperCase()}] `)+msg;
+  d.appendChild(e); d.scrollTop=d.scrollHeight;
+}
+function clearLog(){document.getElementById('sim-log').innerHTML='';}
+
+// ── ANIMATE PACKETS ─────────────────────────────────────────────────
+function animLoop(){
+  animPackets.forEach(pk=>{pk.t=Math.min(1,pk.t+0.025);});
+  if(animPackets.some(pk=>pk.t<1)||simState.running) drawFrame(simState.step||0);
+  requestAnimationFrame(animLoop);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+loadScheme();
+animLoop();
+</script>
+</body>
+</html>

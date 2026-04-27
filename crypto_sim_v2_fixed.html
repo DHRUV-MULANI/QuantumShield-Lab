@@ -1,0 +1,633 @@
+
+<style>
+:root{
+  --color-background-primary:#111110;
+  --color-background-secondary:#1a1a18;
+  --color-border-secondary:#2a2a27;
+  --color-border-tertiary:#2e2e2b;
+  --color-text-primary:#c2c0b6;
+  --color-text-secondary:#6b6b66;
+  --font-mono:monospace;
+  --font-sans:sans-serif;
+}
+body{background:#111110;color:#c2c0b6;}
+*{box-sizing:border-box;margin:0;padding:0}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.wrap{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.topbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 10px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px}
+.topbar label{font-size:11px;color:var(--color-text-secondary);font-family:var(--font-sans)}
+.topbar select{font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-tertiary);border-radius:6px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-mono)}
+.tbtn{font-size:11px;padding:5px 11px;border:0.5px solid var(--color-border-secondary);border-radius:6px;background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:var(--font-sans)}
+.tbtn:hover{background:var(--color-background-secondary)}
+.tbtn.go{border-color:#1D9E75;color:#1D9E75}
+.tbtn.ev{border-color:#D85A30;color:#D85A30}
+.tog{display:flex;align-items:center;gap:4px;font-size:11px;color:#D85A30;font-family:var(--font-sans)}
+.main{display:grid;grid-template-columns:176px 1fr 176px;gap:8px}
+.panel{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px;overflow-y:auto;max-height:520px}
+.ptitle{font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--color-text-secondary);margin-bottom:8px;text-transform:uppercase;font-family:var(--font-sans)}
+.prow{margin-bottom:8px}
+.prow label{display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:2px;font-family:var(--font-sans)}
+.prow input{width:100%;font-size:11px;padding:4px 6px;border:0.5px solid var(--color-border-tertiary);border-radius:5px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-mono)}
+.tag{display:inline-block;font-size:9px;padding:2px 5px;border-radius:3px;font-family:var(--font-mono);margin-top:2px}
+.tag-priv{background:#2e1208;color:#e07050}
+.tag-pub{background:#0f2e22;color:#1D9E75}
+.tag-enc{background:#0d1e30;color:#4a9edd}
+.vlab{font-size:9px;color:var(--color-text-secondary);font-family:var(--font-sans);margin-top:6px;margin-bottom:2px}
+.vbox{font-size:10px;font-family:var(--font-mono);padding:4px 7px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:5px;word-break:break-all;color:var(--color-text-primary);min-height:24px}
+.div{height:0.5px;background:var(--color-border-tertiary);margin:8px 0}
+.cmid{display:flex;flex-direction:column;gap:6px}
+.cbar{display:flex;justify-content:space-between;align-items:center}
+.cbar .slbl{font-size:11px;color:var(--color-text-secondary);font-family:var(--font-sans)}
+.cbar .stlbl{font-size:11px;font-family:var(--font-mono);color:#1D9E75}
+.cvs-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;overflow:hidden;height:220px;position:relative}
+canvas#sc{display:block;width:100%;height:100%}
+.steps-area{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:8px 10px}
+.steps-bar{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+.scard{flex:0 0 auto;width:88px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-left:3px solid transparent;border-radius:6px;padding:5px 6px;cursor:pointer}
+.scard:hover{border-left-color:#9FE1CB}
+.scard.act{border-left-color:#1D9E75;background:#0f2e22}
+.scard.act .sn,.scard.act .sl,.scard.act .sf{color:#34d399}
+.sn{font-size:9px;color:var(--color-text-secondary);font-family:var(--font-sans)}
+.sl{font-size:10px;font-weight:500;color:var(--color-text-primary);font-family:var(--font-sans)}
+.sf{font-size:9px;color:var(--color-text-secondary);font-family:var(--font-mono);margin-top:1px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fbox{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:8px 10px}
+.flbl{font-size:9px;color:var(--color-text-secondary);font-family:var(--font-sans);margin-bottom:4px}
+.fform{font-size:12px;font-family:var(--font-mono);color:var(--color-text-primary);padding:5px 7px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:5px;margin-bottom:4px}
+.fexpl{font-size:10px;color:var(--color-text-secondary);font-family:var(--font-sans);line-height:1.4}
+.logbox{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:6px 8px;height:68px;overflow-y:auto}
+.lent{font-size:10px;font-family:var(--font-mono);padding:1px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.la{color:#1D9E75}.lb{color:#4a9edd}.le{color:#D85A30}.ls{color:var(--color-text-secondary)}
+.chart-sec{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px}
+.chart-title{font-size:10px;font-weight:500;color:var(--color-text-secondary);font-family:var(--font-sans);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.chart-wrap{position:relative;width:100%;height:160px}
+.badge-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+</style>
+
+<h2 class="sr-only">Cryptography simulation: Alice encrypts and sends to Bob, Eve can intercept. Choose from 8 schemes. Parameters update live. 2D chart shows scheme properties.</h2>
+
+<div class="wrap">
+<div class="topbar">
+  <label>Scheme</label>
+  <select id="sch" onchange="init()">
+    <option value="ggh">GGH (Lattice)</option>
+    <option value="svp">SVP (Lattice)</option>
+    <option value="cvp">CVP (Lattice)</option>
+    <option value="ecc">ECC (Public Key)</option>
+    <option value="ecdh">ECDH (Key Exchange)</option>
+    <option value="ntru">NTRU (Post-Quantum)</option>
+    <option value="fhe">FHE (Homomorphic)</option>
+    <option value="hasse">Hasse (ECC Theory)</option>
+  </select>
+  <button class="tbtn go" onclick="runAll()">▶ Run</button>
+  <button class="tbtn" onclick="stepFwd()">Step →</button>
+  <button class="tbtn" onclick="resetSim()">↺ Reset</button>
+  <div class="tog"><input type="checkbox" id="eveOn" onchange="toggleEve()"><label for="eveOn">Eve (attacker)</label></div>
+</div>
+
+<div class="main">
+  <div class="panel">
+    <div class="ptitle" style="color:#1D9E75">Alice — sender</div>
+    <div id="aParams"></div>
+    <div class="div"></div>
+    <div class="vlab">Ciphertext c(x)</div>
+    <div class="vbox" id="aCt">—</div>
+    <div class="badge-row">
+      <span class="tag tag-enc">encrypts M</span>
+      <span class="tag tag-pub">uses pub key</span>
+    </div>
+  </div>
+
+  <div class="cmid">
+    <div class="cbar">
+      <span class="slbl" id="schName">GGH Lattice Cryptosystem</span>
+      <span class="stlbl" id="stepLbl">Ready</span>
+    </div>
+    <div class="cvs-wrap">
+      <canvas id="sc"></canvas>
+    </div>
+    <div class="steps-area">
+      <div class="slbl" style="font-size:10px;margin-bottom:5px;font-family:var(--font-sans);color:var(--color-text-secondary)">Steps — click to inspect</div>
+      <div class="steps-bar" id="stepCards"></div>
+    </div>
+    <div class="frow">
+      <div class="fbox">
+        <div class="flbl">Active formula</div>
+        <div class="fform" id="fFormula">—</div>
+        <div class="fexpl" id="fExpl">Select a step above</div>
+      </div>
+      <div class="fbox">
+        <div class="flbl">Decrypted M'</div>
+        <div class="fform" id="fDec" style="color:#1D9E75">—</div>
+        <div class="fexpl" id="fDecExpl">Run simulation first</div>
+      </div>
+    </div>
+    <div class="logbox" id="log"></div>
+    <div class="chart-sec">
+      <div class="chart-title" id="chartTitle">Scheme properties</div>
+      <div class="chart-wrap"><canvas id="propChart" role="img" aria-label="Bar chart showing scheme security properties"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle" style="color:#4a9edd">Bob — receiver</div>
+    <div id="bParams"></div>
+    <div class="div"></div>
+    <div class="vlab">Received c(x)</div>
+    <div class="vbox" id="bCt">—</div>
+    <div class="vlab">Decrypted M'</div>
+    <div class="vbox" id="bDec" style="color:#1D9E75">—</div>
+    <div class="badge-row">
+      <span class="tag tag-priv">private key</span>
+      <span class="tag tag-enc">decrypts c</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const C={alice:'#1D9E75',bob:'#185FA5',eve:'#D85A30',pkt:'#BA7517',gray:'#888780'};
+
+const SCHEMES={
+  ggh:{
+    name:'GGH Lattice Cryptosystem',type:'Lattice Crypto',
+    formula:'c = m·W + r',
+    aFields:[
+      {id:'m',lbl:'Message m',def:'(2,-5)',hint:'plaintext vector'},
+      {id:'r',lbl:'Perturbation r',def:'(1,-1)',hint:'small error vector'},
+    ],
+    bFields:[
+      {id:'v1',lbl:'Private basis v₁',def:'(17,0)',hint:'good basis',t:'priv'},
+      {id:'v2',lbl:'Private basis v₂',def:'(0,19)',hint:'good basis',t:'priv'},
+      {id:'w1',lbl:'Public basis w₁',def:'(34,57)',hint:'bad basis (UV)',t:'pub'},
+      {id:'w2',lbl:'Public basis w₂',def:'(51,95)',hint:'bad basis (UV)',t:'pub'},
+    ],
+    steps:[
+      {l:'Key Gen',f:'W = U·V',e:'Bob generates a good private basis V and a unimodular matrix U. Public key W=UV is a "bad" basis — hard to use without knowing V.'},
+      {l:'Encrypt',f:'c = m·W + r',e:'Alice multiplies message m by public W, then adds small error r. Nobody can remove r without the good private basis V.'},
+      {l:'Transmit',f:'c → Bob',e:'Ciphertext c is sent over the channel. Eve sees c but needs to solve CVP with a bad basis — computationally hard.'},
+      {l:'Babai CVP',f:'v = Babai(c, V)',e:"Bob uses his good private basis V with Babai's closest vertex algorithm. Good basis means the rounding step finds the correct lattice point."},
+      {l:'Recover M',f:"m = v·W⁻¹",e:'Bob multiplies recovered lattice point v by inverse of public W. Result is exactly the original message m.'},
+    ],
+    compute(a,b){
+      const ct=`c = ${a.m}·W + ${a.r}`;
+      return {ct, dec:`m' = ${a.m}`, eve:'Sees c; must solve CVP with bad basis W'};
+    },
+    chartData:{labels:['Key size','Enc speed','Dec speed','PQ security','Hardness'],data:[4,3,4,5,4],color:'#1D9E75'},
+  },
+  svp:{
+    name:'Shortest Vector Problem',type:'Lattice Problem',
+    formula:'min{‖v‖ : v∈L, v≠0}',
+    aFields:[
+      {id:'b1',lbl:'Basis vector v₁',def:'(31,59)',hint:'lattice basis'},
+      {id:'b2',lbl:'Basis vector v₂',def:'(37,70)',hint:'lattice basis'},
+    ],
+    bFields:[
+      {id:'target',lbl:'SVP answer',def:'(3,-1)',hint:'shortest vector',t:'priv'},
+      {id:'iters',lbl:'Reduction iters',def:'4',hint:'Gauss steps',t:'enc'},
+    ],
+    steps:[
+      {l:'Input',f:'{v₁, v₂}',e:'Start with any lattice basis — two linearly independent vectors. The lattice L is all integer linear combinations.'},
+      {l:'Gram-Schmidt',f:"v₂* = v₂ - μ·v₁",e:'Compute the Gram-Schmidt orthogonalization. μ = v₁·v₂/‖v₁‖². v₂* is the projection of v₂ perpendicular to v₁.'},
+      {l:'Reduce',f:'v₂ ← v₂ - t·v₁',e:'Set t = round(μ). Replace v₂ with v₂ - t·v₁. This gives a shorter, more orthogonal basis without leaving the lattice.'},
+      {l:'Check',f:'‖v₁‖ ≤ ‖v₂‖?',e:'If basis is already reduced (‖v₁‖≤‖v₂‖ and |μ|≤½), stop. Otherwise swap v₁↔v₂ and go back to step 2.'},
+      {l:'SVP',f:'v₁ = solution',e:'The first vector of the reduced basis IS the shortest nonzero vector in L. This solves SVP in 2D (Gauss reduction).'},
+    ],
+    compute(a,b){
+      return {ct:`L({${a.b1}},{${a.b2}})`, dec:`SVP = ${b.target}`, eve:'SVP is NP-hard for high dimensions'};
+    },
+    chartData:{labels:['2D speed','nD hard','PQ secure','Reduction','Theory'],data:[5,1,5,4,5],color:'#185FA5'},
+  },
+  cvp:{
+    name:'Closest Vector Problem (Babai)',type:'Lattice Problem',
+    formula:'argmin{‖w-v‖ : v∈L}',
+    aFields:[
+      {id:'w1',lbl:'Target w (x)',def:'53172',hint:'not in lattice'},
+      {id:'w2',lbl:'Target w (y)',def:'81743',hint:'not in lattice'},
+    ],
+    bFields:[
+      {id:'bv1',lbl:'Basis v₁',def:'(137,312)',hint:'good basis',t:'priv'},
+      {id:'bv2',lbl:'Basis v₂',def:'(215,-187)',hint:'good basis',t:'priv'},
+    ],
+    steps:[
+      {l:'Setup',f:'w ∉ L',e:'Target point w is not in the lattice L. We want the closest lattice point. Babai\'s algorithm is efficient when the basis is near-orthogonal.'},
+      {l:'Express w',f:'w = t₁v₁ + t₂v₂',e:'Write w as a real linear combination of basis vectors by solving the linear system. Coefficients t₁,t₂ are real numbers, not integers.'},
+      {l:'Round',f:'aᵢ = round(tᵢ)',e:'Round each real coefficient tᵢ to nearest integer aᵢ. This is Babai\'s rounding step — the quality depends on how orthogonal the basis is.'},
+      {l:'Approx',f:'v = a₁v₁ + a₂v₂',e:'The integer combination gives a lattice point v. With a good (near-orthogonal) basis, this is the actual closest lattice point.'},
+      {l:'Hadamard',f:'H(B)=(det/∏‖vᵢ‖)^(1/n)',e:'Hadamard ratio H ∈ (0,1]. H close to 1 means nearly orthogonal — gives accurate CVP. H near 0 means bad basis — Babai fails badly.'},
+    ],
+    compute(a,b){
+      return {ct:`w=(${a.w1},${a.w2})`, dec:`v ≈ (53159,81818)`, eve:'Cannot solve CVP without good basis'};
+    },
+    chartData:{labels:['With good B','With bad B','PQ secure','NP-hard','Hadamard'],data:[5,1,5,5,4],color:'#7F77DD'},
+  },
+  ecc:{
+    name:'Elliptic Curve Cryptography',type:'Public Key',
+    formula:'y² = x³ + ax + b (mod p)',
+    aFields:[
+      {id:'M',lbl:'Message M',def:'25',hint:'integer < p'},
+      {id:'k',lbl:'Random k',def:'7',hint:'ephemeral secret'},
+    ],
+    bFields:[
+      {id:'d',lbl:'Private key d',def:'11',hint:'secret scalar',t:'priv'},
+      {id:'Gx',lbl:'Generator G.x',def:'5',hint:'base point',t:'pub'},
+      {id:'p',lbl:'Prime p',def:'97',hint:'field modulus',t:'enc'},
+      {id:'a',lbl:'Curve param a',def:'2',hint:'y²=x³+ax+b',t:'enc'},
+    ],
+    steps:[
+      {l:'Curve',f:'E: y²=x³+ax+b mod p',e:'Define elliptic curve over finite field Fₚ. All point arithmetic is mod p. The set of points forms an abelian group under point addition.'},
+      {l:'Key Gen',f:'Q = d·G',e:'Bob picks private scalar d. Public key Q = d·G means adding G to itself d times on the curve. Given G and Q, finding d is the discrete log — infeasible.'},
+      {l:'Encrypt',f:'C₁=k·G, C₂=M+k·Q',e:'Alice picks random k. Computes two points: C₁=kG (masking) and C₂=M+kQ (masked message). Sends both curve points.'},
+      {l:'Transmit',f:'(C₁,C₂)→Bob',e:'Eve sees two curve points but cannot compute k·Q without knowing d (discrete log problem on elliptic curve = ECDLP).'},
+      {l:'Decrypt',f:"M = C₂ - d·C₁",e:'Bob computes d·C₁ = dk·G = k·(d·G) = k·Q. Subtracts from C₂: C₂ - k·Q = M + k·Q - k·Q = M. Clean cancellation!'},
+    ],
+    compute(a,b){
+      const M=a.M,k=a.k,d=b.d;
+      return {ct:`C₁=k·G, C₂=${M}+k·Q`, dec:`M'=${M}`, eve:'Sees C₁,C₂; needs d to compute k·Q (ECDLP)'};
+    },
+    chartData:{labels:['Key size','Speed','PQ secure','Bit security','Adoption'],data:[5,4,1,4,5],color:'#185FA5'},
+  },
+  ecdh:{
+    name:'Elliptic Curve Diffie-Hellman',type:'Key Exchange',
+    formula:'S = a·B = b·A = ab·G',
+    aFields:[
+      {id:'a',lbl:"Alice's secret a",def:'6',hint:'private scalar'},
+      {id:'G',lbl:'Generator G',def:'(5,1)',hint:'public base point'},
+    ],
+    bFields:[
+      {id:'b',lbl:"Bob's secret b",def:'15',hint:'private scalar',t:'priv'},
+      {id:'p',lbl:'Prime p',def:'97',hint:'field',t:'enc'},
+      {id:'crv',lbl:'Curve',def:'y²=x³+2x+3',hint:'equation',t:'pub'},
+    ],
+    steps:[
+      {l:'Agree',f:'Curve, G, p public',e:'Alice and Bob agree publicly on the elliptic curve, prime p, and generator point G. These are not secret — they are the system parameters.'},
+      {l:'Alice pub',f:'A = a·G',e:"Alice computes her public key A = a·G (scalar multiplication). Publishes A. Her private scalar a stays secret."},
+      {l:'Bob pub',f:'B = b·G',e:"Bob computes B = b·G. Publishes B. Both A and B are elliptic curve points that are safe to send publicly."},
+      {l:'Exchange',f:'A ↔ B public',e:'Alice sends A to Bob; Bob sends A to Alice. Eve sees both public keys but cannot compute the shared secret without solving ECDLP.'},
+      {l:'Shared Key',f:'S = a·B = b·A',e:'Alice: S = a·B = a·b·G. Bob: S = b·A = b·a·G. Same point! This is the shared secret, used to derive a symmetric key.'},
+    ],
+    compute(a,b){
+      return {ct:`A=a·G, B=b·G (public)`, dec:`S = ab·G shared`, eve:'Sees A,B; ECDLP prevents finding shared S'};
+    },
+    chartData:{labels:['Forward sec','Efficiency','PQ secure','Auth?','Adoption'],data:[5,5,1,2,5],color:'#639922'},
+  },
+  ntru:{
+    name:'NTRU Encryption & Decryption',type:'Post-Quantum',
+    formula:'e = r·h + m (mod q)',
+    aFields:[
+      {id:'m',lbl:'Message m(x)',def:'x+1',hint:'polynomial in Zₚ[x]'},
+      {id:'r',lbl:'Blinding r(x)',def:'x-1',hint:'random small poly'},
+    ],
+    bFields:[
+      {id:'f',lbl:'Private f(x)',def:'1+x-x²',hint:'invertible mod p,q',t:'priv'},
+      {id:'g',lbl:'Private g(x)',def:'x+x²',hint:'small polynomial',t:'priv'},
+      {id:'N',lbl:'Ring degree N',def:'5',hint:'Z[x]/(xᴺ-1)',t:'enc'},
+      {id:'q',lbl:'Modulus q',def:'32',hint:'large (public)',t:'pub'},
+      {id:'pmod',lbl:'Modulus p',def:'3',hint:'small (private)',t:'priv'},
+    ],
+    steps:[
+      {l:'Key Gen',f:'h = p·g·f⁻¹ mod q',e:'Bob computes public key h from private polynomials f,g in ring R=Z[x]/(xᴺ-1). The ring structure makes this a hard lattice problem for an attacker.'},
+      {l:'Encrypt',f:'e = r·h + m mod q',e:'Alice encodes message as polynomial m (small coefs). Picks random r. Ciphertext e = r·h + m mod q mixes them so neither is individually recoverable.'},
+      {l:'Transmit',f:'e(x) → Bob',e:'Polynomial ciphertext e is sent. Coefficients are integers mod q. Attack requires solving the NTRU lattice problem — believed post-quantum hard.'},
+      {l:'Dec step 1',f:'a = f·e mod q',e:'Bob multiplies by private f. The product f·(r·h+m) = p·r·g + f·m mod q. The p·r·g part is "small" if g,r are small.'},
+      {l:'Dec step 2',f:"m = f⁻¹·(a mod p) mod p",e:'Take a mod p: p·r·g vanishes, leaving f·m mod p. Multiply by f⁻¹ mod p to get m. Original polynomial message recovered!'},
+    ],
+    compute(a,b){
+      return {ct:`e(x) = ${a.r}·h + ${a.m} mod ${b.q}`, dec:`m(x) = ${a.m}`, eve:'NTRU problem: lattice-hard, post-quantum secure'};
+    },
+    chartData:{labels:['PQ secure','Key size','Speed','Provable','Maturity'],data:[5,3,4,3,4],color:'#7F77DD'},
+  },
+  fhe:{
+    name:'Fully Homomorphic Encryption',type:'Cloud Security',
+    formula:'Eval(f, Enc(x)) = Enc(f(x))',
+    aFields:[
+      {id:'m1',lbl:'Data m₁',def:'7',hint:'first input'},
+      {id:'m2',lbl:'Data m₂',def:'3',hint:'second input'},
+      {id:'op',lbl:'Operation f',def:'add',hint:'add or multiply'},
+    ],
+    bFields:[
+      {id:'sk',lbl:'Secret key sk',def:'1011',hint:'decryption key',t:'priv'},
+      {id:'noise',lbl:'Noise budget',def:'40',hint:'bits remaining',t:'enc'},
+      {id:'boot',lbl:'Bootstrapping',def:'yes',hint:'refreshes noise',t:'pub'},
+    ],
+    steps:[
+      {l:'Enc m₁',f:'c₁ = Enc(pk, m₁)',e:'Alice encrypts m₁ under Bob\'s public key. Result c₁ = m₁ + noise + lattice element. Without secret key, looks random.'},
+      {l:'Enc m₂',f:'c₂ = Enc(pk, m₂)',e:'Similarly, c₂ = Enc(m₂). Both ciphertexts are sent to the cloud server for processing — server never sees plaintext.'},
+      {l:'Eval',f:'c_f = Eval(f, c₁, c₂)',e:'Cloud performs f (add or multiply) directly on ciphertexts. Homomorphism means: Dec(Eval(f,c₁,c₂)) = f(Dec(c₁),Dec(c₂)).'},
+      {l:'Bootstrap',f:'c_fresh = Boot(c_f)',e:'Each operation adds noise. Bootstrapping is a special evaluation of the decryption circuit that resets noise without decrypting — enables unlimited computation.'},
+      {l:'Decrypt',f:'m_f = Dec(sk, c_f)',e:'Alice decrypts result with secret key. Gets f(m₁,m₂) — computed on encrypted data the cloud never accessed in plaintext. Perfect privacy.'},
+    ],
+    compute(a,b){
+      const m1=parseInt(a.m1)||7,m2=parseInt(a.m2)||3,op=a.op||'add';
+      const res=op==='multiply'?m1*m2:m1+m2;
+      const sym=op==='multiply'?'×':'+';
+      return {ct:`Enc(${m1}), Enc(${m2})`, dec:`${m1}${sym}${m2}=${res}`, eve:`Sees only ciphertexts — FHE hides all values`};
+    },
+    chartData:{labels:['Privacy','Slowdown','PQ secure','Cloud use','Maturity'],data:[5,1,5,5,2],color:'#BA7517'},
+  },
+  hasse:{
+    name:"Hasse's Theorem — ECC Point Count",type:'ECC Theory',
+    formula:'|#E − (p+1)| ≤ 2√p',
+    aFields:[
+      {id:'p',lbl:'Prime p',def:'7',hint:'field size'},
+      {id:'a',lbl:'Curve a',def:'1',hint:'y²=x³+ax+b'},
+      {id:'b',lbl:'Curve b',def:'1',hint:'discriminant≠0'},
+    ],
+    bFields:[
+      {id:'N',lbl:'#E (count)',def:'auto',hint:'computed below',t:'enc'},
+      {id:'t',lbl:'Trace of Frob.',def:'auto',hint:'t=#E-(p+1)',t:'enc'},
+    ],
+    steps:[
+      {l:'Define E',f:'y²=x³+ax+b mod p',e:'Choose prime p, curve parameters a,b with 4a³+27b²≢0 (mod p) for a non-singular curve. Count affine points plus point at infinity.'},
+      {l:'Count #E',f:'#E=|{(x,y):y²≡x³+ax+b}|+1',e:'For each x in Fₚ, compute x³+ax+b mod p. It contributes 0 points (non-residue), 1 point (zero), or 2 points (quadratic residue), plus O at infinity.'},
+      {l:"Hasse bound",f:'|#E-(p+1)| ≤ 2√p',e:"Hasse's theorem guarantees the number of curve points lies within 2√p of p+1. The deviation t = p+1 - #E is the trace of Frobenius."},
+      {l:'Group order',f:'n = #E (prime?)',e:'The curve points form an abelian group. For cryptography we need #E to have a large prime factor r, so that the discrete log in the r-torsion subgroup is hard.'},
+      {l:'Security',f:'DLP in #E hard',e:'If #E = r (prime) or #E = cofactor × r with large r, the elliptic curve discrete log problem in the r-subgroup is computationally infeasible for large p.'},
+    ],
+    compute(a,b){
+      const p=parseInt(a.p)||7;
+      let cnt=1;
+      for(let x=0;x<p;x++){const rhs=((x*x*x+parseInt(a.a||1)*x+parseInt(a.b||1))%p+p)%p;if(rhs===0)cnt+=1;else{let found=false;for(let y=0;y<p;y++){if((y*y%p)===rhs){found=true;break;}}if(found)cnt+=2;}}
+      const bound=Math.floor(2*Math.sqrt(p));
+      const tr=p+1-cnt;
+      return {ct:`#E=${cnt}, p=${p}`, dec:`trace t=${tr}, |t|≤${bound}`, eve:`Cannot predict #E without counting all x in Fₚ`};
+    },
+    chartData:{labels:['Point count','Hasse gap','PQ secure','Group order','Theory'],data:[5,4,1,5,5],color:'#D85A30'},
+  },
+};
+
+let S='ggh', stepIdx=0, eveOn=false, running=false, timer=null;
+let animPkts=[], propChart=null;
+
+const cvs=document.getElementById('sc');
+const gctx=cvs.getContext('2d');
+cvs.width=440; cvs.height=220;
+
+function init(){
+  S=document.getElementById('sch').value;
+  const s=SCHEMES[S];
+  document.getElementById('schName').textContent=s.name;
+
+  let ah='';
+  s.aFields.forEach(f=>{
+    ah+=`<div class="prow"><label>${f.lbl} <span style="font-size:9px;color:var(--color-text-secondary)">${f.hint}</span></label><input id="af_${f.id}" value="${f.def}" oninput="recalc()"></div>`;
+  });
+  document.getElementById('aParams').innerHTML=ah;
+
+  let bh='';
+  s.bFields.forEach(f=>{
+    const tc=f.t==='priv'?'tag-priv':f.t==='pub'?'tag-pub':'tag-enc';
+    const tl=f.t==='priv'?'private':f.t==='pub'?'public':'param';
+    bh+=`<div class="prow"><label>${f.lbl} <span class="tag ${tc}">${tl}</span></label><input id="bf_${f.id}" value="${f.def}" oninput="recalc()"></div>`;
+  });
+  document.getElementById('bParams').innerHTML=bh;
+
+  let sh='';
+  s.steps.forEach((st,i)=>{
+    sh+=`<div class="scard" id="sc_${i}" onclick="pickStep(${i})"><div class="sn">Step ${i+1}</div><div class="sl">${st.l}</div><div class="sf">${st.f}</div></div>`;
+  });
+  document.getElementById('stepCards').innerHTML=sh;
+
+  resetSim();
+  recalc();
+  drawChart();
+}
+
+function getA(){
+  const s=SCHEMES[S],p={};
+  s.aFields.forEach(f=>{const el=document.getElementById('af_'+f.id);if(el)p[f.id]=el.value;});
+  return p;
+}
+function getB(){
+  const s=SCHEMES[S],p={};
+  s.bFields.forEach(f=>{const el=document.getElementById('bf_'+f.id);if(el)p[f.id]=el.value;});
+  return p;
+}
+
+function recalc(){
+  const res=SCHEMES[S].compute(getA(),getB());
+  document.getElementById('aCt').textContent=res.ct;
+  document.getElementById('bCt').textContent=res.ct;
+  document.getElementById('bDec').textContent=res.dec;
+  document.getElementById('fDec').textContent=res.dec;
+  document.getElementById('fDecExpl').textContent='Computed from parameters';
+  drawCanvas(stepIdx);
+}
+
+function pickStep(i){
+  stepIdx=i;
+  document.querySelectorAll('.scard').forEach(c=>c.classList.remove('act'));
+  const el=document.getElementById('sc_'+i);
+  if(el) el.classList.add('act');
+  const st=SCHEMES[S].steps[i];
+  document.getElementById('fFormula').textContent=st.f;
+  document.getElementById('fExpl').textContent=st.e;
+  document.getElementById('stepLbl').textContent=`Step ${i+1}: ${st.l}`;
+  drawCanvas(i);
+}
+
+function runAll(){
+  resetSim();
+  running=true;
+  stepIdx=0;
+  addLog('sys','▶ Running: '+SCHEMES[S].name);
+  autoStep();
+}
+function autoStep(){
+  if(stepIdx>=SCHEMES[S].steps.length){
+    running=false;
+    document.getElementById('stepLbl').textContent='Complete ✓';
+    const res=SCHEMES[S].compute(getA(),getB());
+    addLog('bob','Decryption complete: '+res.dec);
+    return;
+  }
+  pickStep(stepIdx);
+  if(stepIdx===0) addLog('bob','Generating keys...');
+  else if(stepIdx===1) addLog('alice','Encrypting message...');
+  else if(stepIdx===2){
+    addLog('alice','Transmitting c(x)...');
+    if(eveOn){const res=SCHEMES[S].compute(getA(),getB());addLog('eve','Intercepted! '+res.eve);}
+  }
+  else if(stepIdx===3) addLog('bob','Decoding ciphertext...');
+  else if(stepIdx===4) addLog('bob','Message recovered successfully');
+  stepIdx++;
+  timer=setTimeout(autoStep,1700);
+}
+function stepFwd(){
+  if(stepIdx<SCHEMES[S].steps.length){pickStep(stepIdx);stepIdx++;}
+}
+function resetSim(){
+  clearTimeout(timer);
+  running=false; stepIdx=0; animPkts=[];
+  document.querySelectorAll('.scard').forEach(c=>c.classList.remove('act'));
+  document.getElementById('stepLbl').textContent='Ready';
+  document.getElementById('fFormula').textContent='—';
+  document.getElementById('fExpl').textContent='Select a step above';
+  document.getElementById('log').innerHTML='';
+  drawCanvas(-1);
+}
+function toggleEve(){eveOn=document.getElementById('eveOn').checked; drawCanvas(stepIdx);}
+
+function addLog(who,msg){
+  const d=document.getElementById('log');
+  const e=document.createElement('div');
+  e.className='lent '+(who==='alice'?'la':who==='bob'?'lb':who==='eve'?'le':'ls');
+  e.textContent=(who==='sys'?'→ ':'['+who.toUpperCase()+'] ')+msg;
+  d.appendChild(e); d.scrollTop=d.scrollHeight;
+}
+
+function drawCanvas(step){
+  const W=cvs.width,H=cvs.height;
+  gctx.clearRect(0,0,W,H);
+  const bg='#111110';
+  const lineclr='#2e2e2b';
+  const txtclr='#6b6b66';
+
+  gctx.fillStyle=bg; gctx.fillRect(0,0,W,H);
+
+  const ax=52,bx=W-52,cy=H/2,ey=cy-56;
+
+  gctx.strokeStyle=lineclr; gctx.lineWidth=1; gctx.setLineDash([4,4]);
+  gctx.beginPath(); gctx.moveTo(ax+36,cy); gctx.lineTo(bx-36,cy); gctx.stroke();
+  gctx.setLineDash([]);
+
+  drawNode(ax,cy,30,'Alice',C.alice,step>=0);
+  drawNode(bx,cy,30,'Bob',C.bob,step>=3);
+
+  if(eveOn){
+    drawNode(W/2,ey,22,'Eve',C.eve,true,true);
+    gctx.strokeStyle=C.eve; gctx.lineWidth=1; gctx.setLineDash([3,3]);
+    gctx.beginPath(); gctx.moveTo(W/2,ey+22); gctx.lineTo(W/2,cy); gctx.stroke();
+    gctx.setLineDash([]);
+  }
+
+  const s=SCHEMES[S];
+  if(step===0){
+    drawLock(bx,cy-42,C.bob);
+    gctx.fillStyle=C.bob; gctx.font='9px monospace'; gctx.textAlign='center';
+    gctx.fillText('generating keys',bx,cy+48);
+  }
+  if(step===1){
+    drawWrapped(ax,cy,3);
+    gctx.fillStyle=C.alice; gctx.font='9px monospace'; gctx.textAlign='center';
+    gctx.fillText('M → c(x)',ax,cy+48);
+  }
+  if(step===2){
+    drawPacket(W/2,cy,C.pkt,'c(x)');
+    drawArrow(ax+36,cy,W/2-24,cy,C.alice);
+    drawArrow(W/2+24,cy,bx-36,cy,C.bob);
+    if(eveOn){drawPacket(W/2,ey+4,C.eve,'?'); gctx.strokeStyle=C.eve; gctx.lineWidth=1; gctx.beginPath(); gctx.moveTo(W/2,cy-14); gctx.lineTo(W/2,ey+22); gctx.stroke();}
+  }
+  if(step===3){
+    drawPacket(bx,cy-42,C.bob,'Dec');
+    gctx.fillStyle=C.bob; gctx.font='9px monospace'; gctx.textAlign='center';
+    gctx.fillText(s.steps[3].f,bx,cy+48);
+  }
+  if(step>=4){
+    drawUnwrap(bx,cy);
+    gctx.fillStyle=C.alice; gctx.font='10px monospace'; gctx.textAlign='center';
+    gctx.fillText("M' = M", W/2, cy+48);
+    const res=SCHEMES[S].compute(getA(),getB());
+    gctx.fillStyle=C.alice; gctx.font='9px monospace';
+    gctx.fillText(res.dec, W/2, cy+60);
+  }
+
+  if(step>=0 && step<s.steps.length){
+    gctx.fillStyle='#888780'; gctx.font='9px monospace'; gctx.textAlign='center';
+    gctx.fillText(s.steps[step].f, W/2, 16);
+  }
+}
+
+function drawNode(x,y,r,label,color,active,evil){
+  gctx.beginPath(); gctx.arc(x,y,r,0,Math.PI*2);
+  gctx.fillStyle=active?color+'28':color+'10'; gctx.fill();
+  gctx.strokeStyle=color; gctx.lineWidth=evil?1.5:active?2:1;
+  if(evil){gctx.setLineDash([3,2]);}
+  gctx.stroke(); gctx.setLineDash([]);
+  gctx.fillStyle=color; gctx.font='bold 11px monospace'; gctx.textAlign='center'; gctx.textBaseline='middle';
+  gctx.fillText(label[0],x,y); gctx.textBaseline='alphabetic';
+  gctx.font='9px monospace';
+  gctx.fillText(label,x,y+r+12);
+}
+function drawLock(x,y,color){
+  gctx.strokeStyle=color; gctx.lineWidth=1.5;
+  gctx.beginPath(); roundRect(gctx,x-7,y,14,11,2); gctx.stroke();
+  gctx.beginPath(); gctx.arc(x,y,6,Math.PI,0); gctx.stroke();
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.arcTo(x+w,y,x+w,y+r,r);c.lineTo(x+w,y+h-r);c.arcTo(x+w,y+h,x+w-r,y+h,r);c.lineTo(x+r,y+h);c.arcTo(x,y+h,x,y+h-r,r);c.lineTo(x,y+r);c.arcTo(x,y,x+r,y,r);c.closePath();}
+function drawWrapped(x,y,layers){
+  const cs=['#5DCAA5','#1D9E75','#0F6E56'];
+  for(let i=layers-1;i>=0;i--){
+    gctx.strokeStyle=cs[i]; gctx.lineWidth=1+i*0.5;
+    roundRect(gctx,x-18+i*3,y-11+i*2,36-i*6,22-i*4,3+i);
+    gctx.stroke();
+  }
+  gctx.fillStyle=C.alice; gctx.font='bold 10px monospace'; gctx.textAlign='center'; gctx.textBaseline='middle';
+  gctx.fillText('M',x,y); gctx.textBaseline='alphabetic';
+}
+function drawUnwrap(x,y){
+  gctx.strokeStyle=C.bob; gctx.lineWidth=2;
+  roundRect(gctx,x-14,y-10,28,20,4); gctx.stroke();
+  gctx.fillStyle=C.bob; gctx.font='bold 10px monospace'; gctx.textAlign='center'; gctx.textBaseline='middle';
+  gctx.fillText("M'",x,y); gctx.textBaseline='alphabetic';
+  gctx.strokeStyle=C.eve; gctx.lineWidth=1;
+  gctx.beginPath(); gctx.moveTo(x-22,y-14); gctx.lineTo(x-22,y+14); gctx.stroke();
+  gctx.beginPath(); gctx.moveTo(x+22,y-14); gctx.lineTo(x+22,y+14); gctx.stroke();
+  gctx.fillStyle='#F0997B'; gctx.font='8px monospace'; gctx.textAlign='center';
+  gctx.fillText('r cancel',x-34,y-16);
+}
+function drawPacket(x,y,color,label){
+  gctx.fillStyle=color+'30'; gctx.strokeStyle=color; gctx.lineWidth=1.5;
+  roundRect(gctx,x-18,y-11,36,22,5); gctx.fill(); gctx.stroke();
+  gctx.fillStyle=color; gctx.font='bold 9px monospace'; gctx.textAlign='center'; gctx.textBaseline='middle';
+  gctx.fillText(label,x,y); gctx.textBaseline='alphabetic';
+}
+function drawArrow(x1,y1,x2,y2,color){
+  gctx.strokeStyle=color; gctx.lineWidth=1.5; gctx.setLineDash([]);
+  gctx.beginPath(); gctx.moveTo(x1,y1); gctx.lineTo(x2,y2); gctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);
+  gctx.fillStyle=color; gctx.beginPath();
+  gctx.moveTo(x2,y2);
+  gctx.lineTo(x2-9*Math.cos(a-0.4),y2-9*Math.sin(a-0.4));
+  gctx.lineTo(x2-9*Math.cos(a+0.4),y2-9*Math.sin(a+0.4));
+  gctx.closePath(); gctx.fill();
+}
+
+function drawChart(){
+  const cd=SCHEMES[S].chartData;
+  if(propChart){propChart.destroy(); propChart=null;}
+  const txt='#a0a09a';
+  const gridClr='rgba(255,255,255,0.07)';
+  document.getElementById('chartTitle').textContent=SCHEMES[S].name+' — properties (1=low, 5=high)';
+  const ctx2=document.getElementById('propChart').getContext('2d');
+  propChart=new Chart(ctx2,{
+    type:'bar',
+    data:{
+      labels:cd.labels,
+      datasets:[{
+        label:'Score',
+        data:cd.data,
+        backgroundColor:cd.color+'55',
+        borderColor:cd.color,
+        borderWidth:1.5,
+        borderRadius:4,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.formattedValue+'/5'}}},
+      scales:{
+        x:{ticks:{color:txt,font:{size:10,family:'monospace'},maxRotation:30},grid:{color:gridClr},border:{color:gridClr}},
+        y:{min:0,max:5,ticks:{color:txt,font:{size:10},stepSize:1},grid:{color:gridClr},border:{color:gridClr}},
+      }
+    }
+  });
+}
+
+function raf(){requestAnimationFrame(raf); if(!running) return; drawCanvas(stepIdx>0?stepIdx-1:-1);}
+
+init();
+requestAnimationFrame(function loop(){drawCanvas(stepIdx>0?stepIdx-1:-1); requestAnimationFrame(loop);});
+</script>
